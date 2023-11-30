@@ -54,10 +54,35 @@ fledge_pheno_df=fledge_merge%>%
 
 n_distinct(fledge_pheno_df$RingId) ## 2299 diff ids and 14867 obs but some have missing info for pheno traits
 
+## ~~ Tarsus df ~~ ###
+fledge_tarsus_df=fledge_pheno_df%>%
+  select(-Mass, -LeftWing, -BillLength)%>% ##remove phenotype info we may not have 
+  na.omit() #remove NAs
+
+n_distinct(fledge_tarsus_df$RingId) ##2262 ids and 6490 records
 
 
+## ~~ Mass df ~~ ####
+fledge_mass_df=fledge_pheno_df%>%
+  select(-LeftTarsus, -LeftWing, -BillLength)%>% ##remove phenotype info we may not have 
+  na.omit() #remove NAs
+
+n_distinct(fledge_mass_df$RingId) ##2294 ids with mass records, 9864 records
+
+## ~~ Bill length  ~~ ####
+fledge_bill_df=fledge_pheno_df%>%
+  select(-LeftTarsus, -LeftWing, -Mass)%>% ##remove phenotype info we may not have 
+  na.omit() #remove NAs
+
+n_distinct(fledge_bill_df$RingId) ##2262 ids with records, 6128 records
 
 
+## ~~ wing length ~~  ####
+### more records for wing length than tarsus
+fledge_wing_df=fledge_pheno_df%>%
+  select(-LeftTarsus, -BillLength, -Mass)%>% ##remove phenotype info we may not have 
+  na.omit() #remove NAs
 
+n_distinct(fledge_wing_df$RingId) ##2296 ids with records, 9410 records
 
 
