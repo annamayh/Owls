@@ -102,7 +102,7 @@ ped_corrected=ped_corrected[,c(1,3,2)]
 
 sequenced_ids_read=read.table("sequioa/3.inputfile_for_sequoia.raw", header=T)%>%
   select(IID)
-sequenced_ids=sequenced_ids_read[,1]
+sequenced_ids=as.character(sequenced_ids_read[,1])
 
 
 compare_parentage=PedCompare(
@@ -132,21 +132,37 @@ print(mismatch_parents)
 
 
 
+CalcOHLLR(Pedigree=   ped_corrected,
+          GenoM=GenoM,
+          CalcLLR = FALSE,
+          LifeHistData=all_life_hist,
+          DumPrefix = c("XF", "XM")
+          )
+
+
 
 
 ########################################################################################
 ##### RUN FULL PEDIGREE RECONSTRUCTION ################################################
 #######################################################################################
 
+
+## try with vector of error rate 
+
+error=c(0.01, 0.01, 0.01)
+
 seq_reconstr_out=sequoia(GenoM, 
                           DummyPrefix = c("XF", "XM"),
-                          LifeHistData=all_life_hist
+                          LifeHistData=all_life_hist, 
+                          Module = 'ped',
+                          Err = error
                          
 )
 
-## created 583 dummy ids (i.e. inferring half-sibs)
+## created 583 dummy ids
 
 save(seq_reconstr_out, file = "sequioa/pedigree_recontr_out.RData")
+load("sequioa/pedigree_recontr_out.RData")
 
 ped_recontr=seq_reconstr_out$Pedigree
 
@@ -159,24 +175,107 @@ compare_pedigrees=PedCompare(
 )
 
 
-mismatches_full_ped=compare_pedigrees$Mismatch
+
+
+#save(parentage_ped, ped_corrected, sequenced_ids, ped_recontr, file = "sequioa/pedigrees_for_inspection.RData")
+
+
+
+mismatches_full=compare_pedigrees$Mismatch
+
+dummys_full=compare_pedigrees$DummyMatch
+
+
+table(mismatches_full_ped$id.dam.cat)
+table(mismatches_full_ped$id.sire.cat)
+
+
+merged=compare_pedigrees$MergedPed%>%
+  filter(dam.class=="Mismatch")
+
+
+n_distinct(mismatches_full_ped$sire.1)
+n_distinct(mismatches_full_ped$dam.1)
 
 sire_mismatches=mismatches_full_ped%>%
   filter(sire.class=="Mismatch"&dam.class=="Match")
 
-both_mismatches=mismatches_full_ped%>%
-  filter(sire.class=="Mismatch"&dam.class=="Mismatch")
+n_distinct(sire_mismatches$sire.1)
+##137
 
 dam_mismatches=mismatches_full_ped%>%
   filter(dam.class=="Mismatch"&sire.class=="Match")
+
+n_distinct(sire_mismatches$dam.1)
+##149
 
 
 dummy_match=compare_pedigrees$DummyMatch%>%
   filter(id.1!="nomatch")
 
 
-testing=seq_reconstr_out$PedigreePar
+ME_pairs=seq_reconstr_out$PedigreePar%>%
+  filter(MEpair>0)
+
+consensus=compare_pedigrees$ConsensusPed
+
+
+mismatches_full_ped%>%
+  filter(id=="877511")
+
+dummys=compare_pedigrees$DummyMatch%>%
+  filter(id.1=="nomatch")
+
 
 
 ped_recontr%>%
-  filter(id=="877125")
+  filter(sire=="M047543")
+
+
+M022944
+
+ped_corrected%>%
+  filter(dadid=="M047543")
+
+# maybe_rels=GetMaybeRel(GenoM, 
+#                        LifeHistData=all_life_hist,
+#                        Pedigree = ped_corrected,
+#                        DumPrefix = c("XF", "XM"),
+#                        SNPd = sequenced_ids
+#                        
+#                        
+#                        )
+
+
+
+GRM=readRDS("sequioa/All3085_AUTOSAUMES_RP502SNPs.RDS")
+
+GRM['M040587','M040592']
+
+sequenced_ids[sequenced_ids=="M031195"]
+
+##
+GRM['M010989','M022696'] ## pedigree mother not genotyped 
+
+sequenced_ids[sequenced_ids=="M027000"]
+
+all_life_hist%>%
+  filter(RingId=="M027000")
+
+
+
+###
+GRM['M040633','M041195'] ##
+
+sequenced_ids[sequenced_ids=="M027000"]
+
+parentage_ped%>%
+  filter(id=="889582")
+
+
+
+
+
+GRM['M005002','M005170'] ##
+
+    
