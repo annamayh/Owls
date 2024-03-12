@@ -10,11 +10,13 @@ library(brms)
 library(pedigree)
 
 setwd("D:/")
-
+setwd("/Volumes/Seagate Portable Drive")
 #### TARSUS ####
 
 ## read in df of tarsus 
-fledge_tarsus_df=read.table("Owls_temp/fledge_pheno_tarsus_df.txt",sep=",", header=T)
+fledge_tarsus_df=read.table("Owls_temp/fledge_pheno_tarsus_df.txt",sep=",", header=T)%>%
+  unique()
+
 head(fledge_tarsus_df)
 
 n_distinct(fledge_tarsus_df$RingId) ## 

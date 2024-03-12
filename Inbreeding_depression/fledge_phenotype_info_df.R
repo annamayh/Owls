@@ -2,17 +2,25 @@
 ### modelling inbreeding depression in tarsus length for fledelings ###
 ## using glmm, and animal models (ped RM and GRM)
 
-setwd("C:/Users/s1881212/Downloads")
+setwd("")
 
 ##Fgrm and FROH from elo
 inb=read.table("All3085_FuniWE_FHBD512g.txt", header = T)%>%
   rename(RingId=INDVs)
 ## reading in phenotype info
-owl_mes=read.csv("BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)%>%
+owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)#%>%
   select(RingId,LeftTarsus, Mass, LeftWing, BillLength, Observer,ObservationDate,EstimatedGrowthStage)%>% ##only selecting the paramters we need
   separate_wider_delim(ObservationDate, delim = " ", names = c("obs_date",NA))%>%
   mutate(obs_date=as.Date(obs_date, format = "%d/%m/%Y"))%>%
   filter(EstimatedGrowthStage=="Fledgling"|EstimatedGrowthStage=="Nestling or Fledgling") ##only taking nestlings/fledgelings i.e. first year of life 
+
+dup=owl_mes%>%
+  !unique()
+
+id=owl_mes%>%
+  filter(RingId=="M038312"&LeftTarsus==482)
+
+id[1:8]
 
 owl_sex=read.table("GeneticSex_3K_RP548.txt", header = T) # sex info 
 ## info on clutch 
