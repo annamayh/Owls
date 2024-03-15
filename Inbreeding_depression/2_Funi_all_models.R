@@ -9,12 +9,23 @@ library(tidyverse)
 library(brms)
 library(pedigree)
 
+<<<<<<< HEAD
 setwd("/Users/ahewett1/Documents")
 
 #### TARSUS ####
 
 ## read in df of tarsus 
 fledge_tarsus_df=read.table("Inbreeding_depression_owls/pheno_df/tarsus_fledge_pheno_df.txt",sep=",", header=T)
+=======
+setwd("D:/")
+setwd("/Volumes/Seagate Portable Drive")
+#### TARSUS ####
+
+## read in df of tarsus 
+fledge_tarsus_df=read.table("Owls_temp/fledge_pheno_tarsus_df.txt",sep=",", header=T)%>%
+  unique()
+
+>>>>>>> a4d6f8cb4427ae105de4d7196205bb961ceb8f0d
 head(fledge_tarsus_df)
 
 n_distinct(fledge_tarsus_df$RingId) ## 
