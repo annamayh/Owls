@@ -1,0 +1,576 @@
+---
+title: "pedigree_diagnostics"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-02-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/ahewett1/Documents")
+
+library(tidyverse)
+library(sequoia)
+
+```
+
+# Pedigree reconstruction using Sequoia 
+
+Pedigree reconstruction was done in two stages - as recommended in the sequoia vignette.
+
+In both stages reconstructed pedigrees were compared to the corrected pedigree (i.e. the one already purged by Alex and Elu, so hopefully shouldn't be too many mismatches initially!)
+
+1. *Parentage assignment* 
+ + Assigns genotyped parents to genotyped offspring
+ + Very quick, designed to find some initial errors in the field pedigree
+2. *Full reconstruction* 
+  + Creates dummy ids where parent doesnt match offspring and cannot find a match in the database ... also useful to find missing links
+  + Multiple iterations to generate a ML of parentage 
+
+
+# Summary #
+
+- Initial parentage assignment showed some ids where genetic sex and recorded sex didnt match i.e. so mother was actually the father 
+- Some examples of mislabeled ids
+- 1 possible extra pair paternity 
+- 1 id where matched to completely different parents from a few years ago. Could be a pair of ids that were sampled and ringed then left the study area and tags fell off, then re-entered the study area 5 yrs later and were ringed again.(?) 
+- A few examples of mothers/fathers being mismatched with offspring and have a relatedness O-P of ~0.25 i.e. more like auntie-niece etc. Checked the mothers and many of them come from crossfostered nests, so perhaps a mix up in ids i.e. where sibling was genotyped under the wrong id. But not sure when sampling Vs ringing occurs. 
+
+.... Details below
+
+(When i use the terms recorded and hypothesised im referring to the parents recorded in the pedigree vs the parents inferred by sequoia)
+
+
+# Inital parentage assignment
+
+Only 20 mismatches between the reconstructed pedigree and the original pedigree
+
+```{r, echo=FALSE}
+load("sequioa/pedigree_FULL_recontr_out26.2.RData")
+
+ped_gen_cor=read.table("sequioa/pedigreeCORRECTED.tab", header = T)
+parentage_ped=seq_parentage_out$Pedigree
+
+
+sequenced_ids_read=read.table("sequioa/3.inputfile_for_sequoia.raw", header=T)%>%
+  select(IID)
+sequenced_ids=as.character(sequenced_ids_read[,1])
+
+
+compare_parentage=PedCompare(
+  Ped1 = ped_gen_cor,
+  Ped2 = parentage_ped,
+  DumPrefix = c("XF", "XM"),
+  SNPd = sequenced_ids
+  
+)
+
+```
+
+### Most initial mismatches appear to be a mix up in sex or mislabelling 
+- M026267 and M038112  recorded as female but actually a male according to the genetic sex
+- M026658 recorded as male but genetic sex is female
+- A potential mislabelling of id 'M031195' which is actually 'M041195'??
+
+**Below shows the flagged mismatches from the comparison:**
+
+- columns dam.1 and sire.1 are the recorded mother and father 
+- columns dam.2 and sire.2 are the inferred parents from seqouia
+```{r}
+
+mismatch_parents=compare_parentage$Mismatch
+print(mismatch_parents)
+```
+## Changed these ids and re-run parentage check ##
+```{r, echo=FALSE}
+ped_corrected=read.table("sequioa/pedigreeCORRECTED.tab", header = T)%>%
+  mutate(dadid=case_when(
+    momid=="M026267" ~"M026267", 
+    momid=="M038112" ~ "M038112",
+    dadid=="M026658" ~ NA,
+    dadid=="M031195" ~ "M041195",
+    TRUE ~ dadid
+  ))%>%
+    mutate(momid=case_when( ## found during first parentage assigment
+      dadid=="M026658" ~ "M026658",## M026267 , M038112  recorded as female but actually a male 
+      momid=="M026267" ~ NA,       ## M026658 recorded as male but genetic sex is female
+      momid=="M038112" ~ NA,
+      TRUE ~ momid 
+      
+    ))
+```
+
+## Only 7 parentage mismatches remaining ##
+
+- 7 mismatches removed due to wrong sex
+- 3 mismatches removed due to mislabelled id 
+- 4 of the 7 remaining mismatches comes from the same mother.  
+- 2 of the 7 remaining mismatches are in the same id
+
+```{r, echo=FALSE}
+
+compare_parentage=PedCompare(
+  Ped1 = ped_corrected,
+  Ped2 = parentage_ped,
+  DumPrefix = c("XF", "XM"),
+  SNPd = sequenced_ids
+  
+)
+
+remaining_mismatch_parents=compare_parentage$Mismatch
+print(remaining_mismatch_parents)
+```
+```{r, echo=FALSE}
+GRM=readRDS("sequioa/All3085_AUTOSAUMES_RP502SNPs.RDS")
+```
+
+## Double parent mismatch for id M011867 ##
+
+#### Comparing parental mismatches with GRM ####
+
+
+- Recorded parents **are not genotyped** (M011634, M011635)
+
+- High genomic relatedness (~0.5) with suggested parents (871649 and 870404) 
+
+```{r}
+GRM['M011867', '871649']
+GRM['M011867', '870404']
+
+```
+
+### Comparing with database info: ###
+
+```{r, echo=FALSE}
+df_bird=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Clutch.csv")%>%
+  select(Id, Season, Nestbox, MaleRing, FemaleRing, CrossFostered)
+```
+
+Recorded parents:
+```{r, echo=FALSE}
+df_bird%>%
+  filter(FemaleRing=="M011634") #recorded mother
+```
+
+Hypothesised parents
+```{r,echo=FALSE}
+df_bird%>%
+  filter(FemaleRing=="871649") # hypothesised mother
+```
+
+```{r,echo=FALSE}
+life2=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv")%>%
+    select(RingId, HatchDate, BornClutchId, HatchClutchId, RaisedClutchId, RingDate, SiteId)
+
+
+```
+
+According to the hatch date and clutch id its clear that the recorded mother and father ID is correct as it matches the clutches they have
+
+ID (M011867) was born in 2008, ~5 years after the hypothesised parents had a clutch. 
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M011867")
+```
+
+Could it be possible that father M011635 = 870404 and mother M011634 = 871649 but came back into the study area 5 years later??
+That would mean breeding for >10 years?
+
+M011867 has 3 siblings, none of which have been genotyped (checked but not shown)
+```{r, echo=FALSE}
+life2%>%
+  filter(BornClutchId=="1027")
+```
+
+#### >> can we check the photos to see if they look like the same individuals?? ####
+
+
+## M040592	 ##
+- Has a mismatched sire 
+
+Hypothesised sire has relatedness of 0.467 with offspring, recorded sire not genotyped
+
+```{r, eval==FALSE}
+
+print(remaining_mismatch_parents)
+
+#recorded sire 
+#GRM['M040592', 'M043668'] ## 
+
+```
+
+```{r}
+#hypothesised sire
+GRM['M040592', 'M040587']
+
+```
+
+Clutches where recorded sire is the father in the database:
+```{r, echo=FALSE}
+df_bird%>%
+  filter(MaleRing=="M043668") #recorded sire
+```
+
+Clutches where hypothesised sire is the father in the database:
+```{r, echo=FALSE}
+df_bird%>%
+  filter(MaleRing=="M040587") # hypothesised sire
+```
+
+Id clutch:
+Born in 2019 so actually overlaps both male seasons
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M040592")
+```
+
+Other ids in clutch 2005:
+```{r}
+life2%>%
+  filter(BornClutchId=="2005")
+
+```
+
+Relatedness between hypothesised father and another offsrping in the same clutch
+```{r}
+GRM['M040590', 'M040587']
+```
+
+A sibling in the clutch has been genotyped as well and also has a very high relatedness with the hypothesised father (0.4795)
+So potentially the whole clutch has the wrong recorded father. 
+(strange that the sibling didnt come back with an error though, maybe paternal error rates are too high?)
+
+So, clear that the recorded father raised the clutch 
+Could be extra-pair paternity as they occur in very similar season? so M028977 mated with M040587 but M043668 did the raising
+
+#### >> Can we check how far away the 2 nestboxes are: 2 and 167B ####
+
+
+```{r, echo=FALSE}
+print(remaining_mismatch_parents)
+
+```
+
+## Dam M027000 ##
+- Has many mismatches with her recorded offspring
+- But has not been genotyped 
+- Hypothesised mother (M022696) has high genomic relatedness with all clutch offspring (this is why it was flagged as a mismatch)
+
+```{r}
+GRM['M026190', 'M022696']
+GRM['M026231', 'M022696']
+GRM['M026232', 'M022696']
+GRM['M010989', 'M022696']
+
+```
+
+Recorded mother clutch info:
+
+Has had multiple seasons of offspring
+```{r, echo=FALSE}
+df_bird%>%
+  filter(FemaleRing=="M027000") #recorded 
+
+```
+Hypothesised mother clutch info:
+
+Has not had any offspring according to database
+```{r, echo=FALSE}
+df_bird%>%
+  filter(FemaleRing=="M022696") # hypothesised 
+```
+
+Origin clutch of recorded mother:
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M027000")
+```
+Origin clutch of hypothesised mother:
+```{r, echo=FALSE}
+
+life2%>%
+  filter(RingId=="M022696")
+```
+
+- Recorded mother and inferred mother are siblings and from the same clutch and moved to the same clutch 
+- Possibly some sort of mix up between the ids after cross fostering??
+- or very high relatedness between auntie and all her nephews/nieces which is kind of unlikely?
+
+
+
+# Full reconstruction #
+
+```{r, echo=FALSE}
+full_ped_recontr=seq_reconstr_out$Pedigree
+
+full_compare_parentage=PedCompare(
+  Ped1 = ped_corrected,
+  Ped2 = full_ped_recontr,
+  DumPrefix = c("XF", "XM"),
+  SNPd = sequenced_ids
+  
+)
+
+full_remaining_mismatch_parents=full_compare_parentage$Mismatch
+##print(full_remaining_mismatch_parents)
+
+```
+```{r, echo=FALSE}
+##print(remaining_mismatch_parents)
+
+```
+
+- Removed IDs already discussed
+
+```{r, echo=FALSE}
+full_remaining_mismatch_parents_filt=full_remaining_mismatch_parents%>%
+  filter(sire.class=="Mismatch"|dam.class=="Mismatch")%>%
+  filter(dam.1!="M027000")%>%
+  filter(sire.1!="M043668")%>%
+  filter(dam.1!="M011634")
+
+```
+
+- 36 other examples where parents are mismatched 
+
+```{r, echo=FALSE}
+##full_remaining_mismatch_parents_filt
+```
+## Start just with mismatched sires ##
+
+All ids where the recorded sire is mismatched with offspring i.e. parental genotype doesnt work with offspring genotype
+
+Have all had dummy id's created as the sires (hence mismatched)
+
+```{r, echo=FALSE}
+full_remaining_mismatch_parents_filt%>%
+  filter(sire.class=="Mismatch")%>%
+  filter(id.sire.cat=="GG")
+```
+
+## Relatedness between recorded sire and offspring ##
+
+- Many as expected for parent-offspring so probably incorrect by sequoia / genotyping coverage 
+```{r}
+GRM['M005013', '899009']
+```
+```{r}
+GRM['M022861', 'M006413']
+GRM['M022863', 'M006413']
+GRM['M022864', 'M006413']
+
+GRM['M026547', 'M006413']
+GRM['M026790', 'M006413']
+GRM['M026792', 'M006413']
+GRM['M026793', 'M006413']
+GRM['M026848', 'M006413']
+
+GRM['M031661', 'M022855']
+GRM['M032001', 'M006413']
+GRM['M038183', 'M031882']
+
+```
+
+## Only 2 flagged mismatches show quite low relatedness between parent-offspring ##
+- M032425
+- M040751
+
+## M032425 ##
+
+Actually M032425 has quite low relatedness with both parents which is weird:
+(but not super low )
+
+```{r}
+GRM['M032425', 'M032203'] 
+GRM['M032425', 'M032228'] 
+
+```
+
+Details of focal id clutch
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M032425")
+
+```
+Details of sire clutch:
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M032203")
+```
+
+Details of mother clutch:
+(note this wasnt flagged as a mismatch but relatedness was very low so wanted to take a look)
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M032228")
+```
+
+```{r, eval=FALSE}
+df_bird%>%
+  filter(Id=="1463")
+
+df_bird%>%
+  filter(Id=="1465")
+```
+
+## M040751 ##
+Relatedness low for parent-offspring
+```{r}
+GRM['M040751', 'M040585']
+
+```
+Clutch info for focal id
+```{r, echo=FALSE}
+
+life2%>%
+  filter(RingId=="M040751")
+```
+
+Clutch info for recorded sire:
+(no info on born clutch etc so immigrant id)
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M040585")
+```
+
+Double checking nextboxID 
+```{r, echo=FALSE}
+df_bird%>%
+  filter(Id=="2094")
+
+```
+#### All records look to be correct in the database, so not sure whats going on here! ####
+
+## Mismatched mothers ##
+```{r, echo=FALSE}
+full_remaining_mismatch_parents_filt%>%
+  filter(dam.r=="nomatch")
+```
+All these seem fine (again maybe an error with sequoia/genotyping)
+```{r}
+GRM['M005026', '877475']
+GRM['M005473', '877475']
+
+GRM['M026986', 'M022177']
+GRM['M032144', 'M027970']
+GRM['M032334', 'M026986']
+
+```
+
+## These are too low for parental relatedness ##
+```{r}
+
+GRM['M026444', 'M026258']
+
+GRM['M026522', 'M026392']
+GRM['M026523', 'M026392']
+GRM['M026524', 'M026392']
+GRM['M026525', 'M026392']
+
+```
+
+```{r, echo=FALSE}
+# life2%>%
+#   filter(RingId=="M026444")
+```
+
+## M026444 ##
+Recorded mother clutch origin info:
+```{r}
+life2%>%
+  filter(RingId=="M026258")
+```
+
+```{r, echo=FALSE}
+# df_bird%>%
+#   filter(Id=="1355")
+```
+
+Mother was raised in a different clutch than she was born, and was ringed almost a month after hatching. 
+Could the individuals have got confused somehow? 
+so was actually her sibling that was sampled? (that would make sense with relatedness)
+
+
+```{r, echo=FALSE}
+# life2%>%
+#   filter(RingId=="M026522")
+# 
+# life2%>%
+#   filter(RingId=="M026523")
+# 
+# life2%>%
+#   filter(RingId=="M026524")
+# 
+# life2%>%
+#   filter(RingId=="M026525")
+# 
+# 
+# df_bird%>%
+#   filter(Id=="1308") #hatched clutch
+# 
+# df_bird%>%
+#   filter(Id=="1315") #raised clutch
+
+```
+Recorded mother origin:
+```{r, echo=FALSE}
+## recorded mother
+life2%>%
+  filter(RingId=="M026392")
+```
+Checking mothers origin clutch
+```{r, echo=FALSE}
+##check mothers origin clutch
+life2%>%
+  filter(BornClutchId=="1224")
+
+```
+Again mother has been moved, so could she have got mixed up with a sibling??
+Mother is ringed >1 month after hatching ... is this before or after theyve been moved and sampled etc.?
+And why is the ring date so different between the siblings in this clutch?
+
+## Checking hypothesis about sibling mismatches ##
+```{r, echo=FALSE}
+mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv")#%>%
+    ##select(RingId, HatchDate, BornClutchId, HatchClutchId, RaisedClutchId, RingDate, SiteId)
+```
+
+#### ID M026392 ####
+example from earlier
+
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M026392")
+```
+Ringed on 22/09/2011
+
+But has measurements starting at 12/08/2011
+Does this mean it was sampled on that date? In which case could the ids have been mixed up??
+
+```{r, echo=FALSE}
+mes%>%
+  filter(RingId=="M026392")%>%
+  head(n = c(7, 8))
+```
+
+
+### M032203 ###
+Another example from above
+
+Same story. Has measurements taken on 2/07/2013 but was ringed on 15/07/2013. 
+So if it was sampled at the same time the first measurement was taken then could have been mixed up with the sibling, which would explain the relatedness of ~0.25 between recorded parent and offspring. 
+
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M032203")
+```
+```{r, echo=FALSE}
+mes%>%
+  filter(RingId=="M032203")%>%
+    head(n = c(7, 8))
+
+```
+
+
+
+

@@ -9,12 +9,12 @@ library(tidyverse)
 library(brms)
 library(pedigree)
 
-setwd("D:/")
+setwd("/Users/ahewett1/Documents")
 
 #### TARSUS ####
 
 ## read in df of tarsus 
-fledge_tarsus_df=read.table("Owls_temp/fledge_pheno_tarsus_df.txt",sep=",", header=T)
+fledge_tarsus_df=read.table("Inbreeding_depression_owls/pheno_df/tarsus_fledge_pheno_df.txt",sep=",", header=T)
 head(fledge_tarsus_df)
 
 n_distinct(fledge_tarsus_df$RingId) ## 
@@ -27,13 +27,15 @@ fledge_tarsus_df$Observer=as.factor(fledge_tarsus_df$Observer)
 fledge_tarsus_df$rank=as.numeric(fledge_tarsus_df$rank)
 
 ## find rough growth curve for all data
-fm1 <- nls(LeftTarsus ~ SSgompertz(age_days, asym, b2, b3),
+gomp_gr <- nls(LeftTarsus ~ SSgompertz(age_days, asym, b2, b3),
            data = fledge_tarsus_df)
-summary(fm1)
+summary(gomp_gr)
 # Estimate Std. Error t value Pr(>|t|)    
 # asym 7.195e+02  7.005e-01 1027.11   <2e-16 ***
 #   b2   2.274e+00  2.635e-02   86.29   <2e-16 ***
 #   b3   8.897e-01  7.375e-04 1206.40   <2e-16 ***
+
+
 
 plot(fledge_tarsus_df$age_days, fledge_tarsus_df$LeftTarsus)
 curve(7.195e+02*exp(-2.274*8.897e-01^x), from = 0, to=80, add = TRUE, col="red", lwd=2)
@@ -64,6 +66,29 @@ mod_tarsus.1.2 <- MCMCglmm(LeftTarsus ~  1 + FuniWE +GeneticSex+rank+SSgompertz(
 plot(mod_tarsus.1.2)
 summary(mod_tarsus.1.2)
 
+growth_log=function(x){
+  
+  720-(720*exp(-0.08*x))
+  
+}
+
+
+mod_tarsus.1.2.2 <- MCMCglmm(LeftTarsus ~  1 + FuniWE +GeneticSex+rank+growth_log(age_days),
+                           random = ~RingId+Observer+clutch_merge+year, 
+                           data = fledge_tarsus_df,
+                           prior = prior1.2, 
+                           nitt = 80000, 
+                           burnin = 10000,
+                           #thin=20
+)
+
+
+plot(mod_tarsus.1.2.2)
+summary(mod_tarsus.1.2.2)
+
+### DIC lower using gompertz ###
+# DIC: 61794.25 
+# DIC: 63896.57 
 
 
 ################################

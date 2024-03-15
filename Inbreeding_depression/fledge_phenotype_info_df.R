@@ -1,7 +1,6 @@
 ## making df for : ###
 ### modelling inbreeding depression in tarsus length for fledelings ###
 ## using glmm, and animal models (ped RM and GRM)
-
 setwd("C:/Users/s1881212/Downloads")
 
 ##Fgrm and FROH from elo

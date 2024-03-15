@@ -67,32 +67,35 @@ head(all_life_hist)
 
 
 ################################################
-### RUN SEQUOIA ##############################
+### RUN PARENTAGE ASSIGNMENT ##############################
 ################################################
 ## first just the parentage to check any mismatches
 seq_parentage_out=sequoia(GenoM, 
                   DummyPrefix = c("XF", "XM"),
                   LifeHistData=all_life_hist,
-                  Module='par'
+                  Module='par', 
+                  args.AP=list(MaxAgeParent=15)
                   )
 
 #################################################
 parentage_ped=seq_parentage_out$Pedigree
 
+## corrected pedigree found during first parentage assigment
 ped_corrected=read.table("sequioa/pedigreeCORRECTED.tab", header = T)%>%
   mutate(dadid=case_when(
     momid=="M026267" ~"M026267", 
     momid=="M038112" ~ "M038112",
     dadid=="M026658" ~ NA,
+    dadid=="M031195" ~ "M041195",
     TRUE ~ dadid
   ))%>%
-    mutate(momid=case_when( ## found during first parentage assigment
-      dadid=="M026658" ~ "M026658",## M026267 , M038112  recorded as female but actually a male 
-      momid=="M026267" ~ NA,       ## M026658 recorded as male but genetic sex is female
-      momid=="M038112" ~ NA,
-      TRUE ~ momid 
-      
-    ))
+  mutate(momid=case_when( ## found during first parentage assigment
+    dadid=="M026658" ~ "M026658",## M026267 , M038112  recorded as female but actually a male 
+    momid=="M026267" ~ NA,       ## M026658 recorded as male but genetic sex is female
+    momid=="M038112" ~ NA,
+    TRUE ~ momid 
+    
+  ))
            
           
 ped_corrected=ped_corrected[,c(1,3,2)]
@@ -132,12 +135,12 @@ print(mismatch_parents)
 
 
 
-CalcOHLLR(Pedigree=   ped_corrected,
-          GenoM=GenoM,
-          CalcLLR = FALSE,
-          LifeHistData=all_life_hist,
-          DumPrefix = c("XF", "XM")
-          )
+# CalcOHLLR(Pedigree=   ped_corrected,
+#           GenoM=GenoM,
+#           CalcLLR = FALSE,
+#           LifeHistData=all_life_hist,
+#           DumPrefix = c("XF", "XM")
+#           )
 
 
 
@@ -155,127 +158,63 @@ seq_reconstr_out=sequoia(GenoM,
                           DummyPrefix = c("XF", "XM"),
                           LifeHistData=all_life_hist, 
                           Module = 'ped',
-                          Err = error
+                          Err = error, 
+                         args.AP=list(MaxAgeParent=15)
+                         
                          
 )
 
-## created 583 dummy ids
+## created 220 dummy ids
 
-save(seq_reconstr_out, file = "sequioa/pedigree_recontr_out.RData")
-load("sequioa/pedigree_recontr_out.RData")
+#save(seq_reconstr_out, seq_parentage_out, file = "sequioa/pedigree_FULL_recontr_out26.2.RData")
+load("sequioa/pedigree_FULL_recontr_out26.2.RData")
 
-ped_recontr=seq_reconstr_out$Pedigree
+full_ped_recontr=seq_reconstr_out$Pedigree
 
 compare_pedigrees=PedCompare(
   Ped1 = ped_corrected,
-  Ped2 = ped_recontr,
+  Ped2 = full_ped_recontr,
   DumPrefix = c("XF", "XM"),
   SNPd = sequenced_ids
   
 )
 
+## pedigree diagnostics 
 
 
 
-#save(parentage_ped, ped_corrected, sequenced_ids, ped_recontr, file = "sequioa/pedigrees_for_inspection.RData")
 
+full_mismatch_parents=compare_pedigrees$Mismatch
+print(full_mismatch_parents)
 
-
-mismatches_full=compare_pedigrees$Mismatch
-
-dummys_full=compare_pedigrees$DummyMatch
-
-
-table(mismatches_full_ped$id.dam.cat)
-table(mismatches_full_ped$id.sire.cat)
-
-
-merged=compare_pedigrees$MergedPed%>%
-  filter(dam.class=="Mismatch")
-
-
-n_distinct(mismatches_full_ped$sire.1)
-n_distinct(mismatches_full_ped$dam.1)
-
-sire_mismatches=mismatches_full_ped%>%
-  filter(sire.class=="Mismatch"&dam.class=="Match")
-
-n_distinct(sire_mismatches$sire.1)
-##137
-
-dam_mismatches=mismatches_full_ped%>%
-  filter(dam.class=="Mismatch"&sire.class=="Match")
-
-n_distinct(sire_mismatches$dam.1)
-##149
-
-
-dummy_match=compare_pedigrees$DummyMatch%>%
-  filter(id.1!="nomatch")
-
-
-ME_pairs=seq_reconstr_out$PedigreePar%>%
-  filter(MEpair>0)
-
-consensus=compare_pedigrees$ConsensusPed
-
-
-mismatches_full_ped%>%
-  filter(id=="877511")
 
 dummys=compare_pedigrees$DummyMatch%>%
   filter(id.1=="nomatch")
 
+##127 dummy ids created with no matching id\
+
+consensus_pedf=compare_pedigrees$ConsensusPed%>%
+  filter(grepl("XF", dam.c))
+
+consensus_pedm=compare_pedigrees$ConsensusPed%>%
+  filter(grepl("XM", sire.c))
+
+consensus_pedi=compare_pedigrees$ConsensusPed%>%
+  filter(grepl("XM|XF", id))
 
 
-ped_recontr%>%
-  filter(sire=="M047543")
+##365 parental gaps filled
 
 
-M022944
+life2=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv")%>%
+  select(RingId, HatchDate, BornClutchId, HatchClutchId, RaisedClutchId, RingDate, SiteId)
 
-ped_corrected%>%
-  filter(dadid=="M047543")
+##mother of this id was created
+life2%>%
+  filter(RingId=="M026522")
 
-# maybe_rels=GetMaybeRel(GenoM, 
-#                        LifeHistData=all_life_hist,
-#                        Pedigree = ped_corrected,
-#                        DumPrefix = c("XF", "XM"),
-#                        SNPd = sequenced_ids
-#                        
-#                        
-#                        )
+df_bird=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Clutch.csv")%>%
+  select(Id, Season, Nestbox, MaleRing, FemaleRing, CrossFostered)
 
-
-
-GRM=readRDS("sequioa/All3085_AUTOSAUMES_RP502SNPs.RDS")
-
-GRM['M040587','M040592']
-
-sequenced_ids[sequenced_ids=="M031195"]
-
-##
-GRM['M010989','M022696'] ## pedigree mother not genotyped 
-
-sequenced_ids[sequenced_ids=="M027000"]
-
-all_life_hist%>%
-  filter(RingId=="M027000")
-
-
-
-###
-GRM['M040633','M041195'] ##
-
-sequenced_ids[sequenced_ids=="M027000"]
-
-parentage_ped%>%
-  filter(id=="889582")
-
-
-
-
-
-GRM['M005002','M005170'] ##
-
-    
+df_bird%>%
+  filter(Id=="1308")
