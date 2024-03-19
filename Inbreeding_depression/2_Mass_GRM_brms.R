@@ -18,9 +18,9 @@ mass_df$rank=as.numeric(mass_df$rank)
 
 ## read in GRM
 grm=read_rds("./input_dfs/All3085_AUTOSAUMES_RP502SNPs.RDS")
-grm_filt=grm[rownames(grm)%in%tarsus_df[["RingId"]],colnames(grm)%in%tarsus_df[["RingId"]]]##filtering grm for ids only in df
+grm_filt=grm[rownames(grm)%in%mass_df[["RingId"]],colnames(grm)%in%mass_df[["RingId"]]]##filtering grm for ids only in df
 
-tarsus_df[,'RingId_pe']=tarsus_df[,'RingId'] ##add permanent env variable to get h2 estimate
+mass_df[,'RingId_pe']=mass_df[,'RingId'] ##add permanent env variable to get h2 estimate
 
 grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
@@ -36,7 +36,7 @@ prior_mass=c(prior(student_t(3, 334,65), class = "Intercept"), ##
 mod_mass_all_GRM.1.Funi <- brm(Mass ~  1 + FuniWE+GeneticSex+rank+SSgompertz(age_days, 352, 4.29, 0.88)+
                              (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year),
                            data = mass_df,
-                           control=list(adapt_delta=0.95),
+                           control=list(adapt_delta=0.98),
                            data2 = list(Amat = GRM),
                            chains = 4,
                            cores=4,

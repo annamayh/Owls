@@ -21,9 +21,9 @@ bill_df$rank=as.numeric(bill_df$rank)
 
 ## read in GRM
 grm=read_rds("./input_dfs/All3085_AUTOSAUMES_RP502SNPs.RDS")
-grm_filt=grm[rownames(grm)%in%tarsus_df[["RingId"]],colnames(grm)%in%tarsus_df[["RingId"]]]##filtering grm for ids only in df
+grm_filt=grm[rownames(grm)%in%bill_df[["RingId"]],colnames(grm)%in%bill_df[["RingId"]]]##filtering grm for ids only in df
 
-tarsus_df[,'RingId_pe']=tarsus_df[,'RingId'] ##add permanent env variable to get h2 estimate
+bill_df[,'RingId_pe']=bill_df[,'RingId'] ##add permanent env variable to get h2 estimate
 
 grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
@@ -42,7 +42,7 @@ mod_bill_all_GRM_Funi <- brm(BillLength ~  1 + FuniWE+GeneticSex+rank+SSgompertz
                                (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year),
                            data = bill_df,
                            prior=prior_bill,
-                           control=list(adapt_delta=0.95),
+                           control=list(adapt_delta=0.98),
                            data2 = list(Amat = GRM),
                            chains = 4,
                            cores=4,

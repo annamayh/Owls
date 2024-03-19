@@ -94,6 +94,8 @@ froh=ggplot(all_froh_ests, aes(x=trait, y=Estimate, ymin=Q2.5, ymax=Q97.5,colour
         legend.position = "none")+
   labs(title = "FROH", y="Inbreeding depression (\u03B2)")
 
+froh
+
 funi+froh
 
 

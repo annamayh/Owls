@@ -80,8 +80,12 @@ summary(fm1)
 #   b2   2.2608293  0.0263329   85.86   <2e-16 ***
 #   b3   0.8899650  0.0007425 1198.61   <2e-16 ***
 
+log(0.8899650)
+log(2.2608293)
+log(7.19)
+
 plot(fledge_pheno_df$age_days, fledge_pheno_df$tarsus_scale, xlim = c(0,90))
-curve(7.19*exp(-2.26*0.89^x), from = 0, to=90, add = TRUE, col="red", lwd=2)
+curve(7.19*exp(-exp(0.8157317)*exp(-0.1165731)^x), from = 0, to=90, add = TRUE, col="red", lwd=2)
 
 fledge_pheno_df$clutch_merge=as.factor(fledge_pheno_df$clutch_merge)
 fledge_pheno_df$GeneticSex=as.factor(fledge_pheno_df$GeneticSex)
@@ -120,10 +124,16 @@ fledge_pheno_df$LeftTarsus=as.numeric(fledge_pheno_df$LeftTarsus)
 
 
 priors_3 <- c(
-  prior(normal(7, 2), nlpar = "asym"),## resonable weight 
-  prior(normal(2, 1), nlpar = "b", lb=0), ## lower bound of 0 because is -ve in the expression
-  prior(normal(0.8, 0.5), nlpar = "c", lb=0, ub=0.99), 
-  
+  prior(normal(700, 10), nlpar = "asym", lb=0, class="b"),##
+  prior(normal(2.26, 1), nlpar = "b", lb=0, class="b"), ## lower bound of 0 because is -ve in the expression
+  prior(normal(2.43, 1), nlpar = "c", lb=0, class="b"), ## lb of 0 because logged 
+  prior(student_t(3, 0, 2.5), class = "sigma", lb=0),
+  # 
+  # prior(normal(0, 2), nlpar = "asym", coef="FuniWE", class="b"), ## 
+  # prior(normal(0, 1), nlpar = "b", coef="FuniWE", class="b"), ## 
+  # prior(normal(0, 1), nlpar = "c", coef="FuniWE", class="b"), ## 
+  # 
+
   prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym"), # assume minimal variation within ids
   prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b"),
   prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "c")
@@ -132,10 +142,10 @@ priors_3 <- c(
 
 growth_model=brm(
   ## model 
-  bf(tarsus_scale ~ asym * exp(-b*c^age_days),
-              asym ~ 1 + funi_scale + GeneticSex+ (1|RingId),
-              b ~  1 + funi_scale + (1|RingId), 
-              c ~  1 + funi_scale + (1|RingId),
+  bf(tarsus_scale ~ asym * exp(-log(b)*log(c)^age_days),
+              asym ~ 1 + FuniWE + GeneticSex+ (1|RingId),
+              b ~  1 + FuniWE + (1|RingId), 
+              c ~  1 + FuniWE + (1|RingId),
               nl=TRUE),
               
   data=fledge_pheno_df, 
@@ -143,7 +153,8 @@ growth_model=brm(
   chains = 2,
   prior = priors_3,
   control = list(adapt_delta = 0.85),
-  init = 0
+  init = 0, 
+  cores = 2
 
 )
 
@@ -159,25 +170,52 @@ plot(growth_model)
 #    nl=TRUE)
 
 
-## add sex in
-growth_model.1clutch=brm(
-  ## model 
-  bf(tarsus_scale ~ asym * exp(-b*c^age_days),
-     asym ~ 1 + FHBD512gen + (1|clutch_merge) + (1|RingId),
-     b ~  1 + FHBD512gen + (1|clutch_merge) + (1|RingId), 
-     c ~  1 + FHBD512gen + (1|RingId), #clutch and sex have no effect here
-     nl=TRUE),
+priors_4 <- c(
+  prior(normal(7, 2), nlpar = "asym",  class="b"),##
+  prior(normal(0, 2), nlpar = "b",  class="b"), ## lower bound of 0 because is -ve in the expression
+  prior(normal(0, 2), nlpar = "c",  class="b"), ## lb of 0 because logged 
+
+  prior(student_t(3, 0, 2.5), class = "sigma", lb=0),
+  prior(student_t(3, 0, 2.5), class="sd",nlpar = "asym"), # assume minimal variation within ids with lb of 0
+  prior(student_t(3, 0, 2.5),  class="sd", nlpar = "b"),
+  prior(student_t(3, 0, 2.5),  class="sd", nlpar = "c"), 
   
+  prior(cauchy(0, 1), class="sd", group="RingId", nlpar = "asym"), # assume minimal variation within ids
+  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b"),
+  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "c")
+)
+
+
+
+## adding various other parameters into the model to determine th e best one 
+growth_model.1=brm(
+  ## model 
+  bf(tarsus_scale ~ asym * exp(-exp(b)*exp(c)^age_days),
+     asym + b + c ~ 1 + FuniWE + rank + GeneticSex + (1|clutch_merge) + (1|RingId) + (1|Observer)+(1|year),
+     nl=TRUE),
   data=fledge_pheno_df, 
   family = gaussian(),
   chains = 2,
-  prior = priors_3,
+  prior = priors_4,
   control = list(adapt_delta = 0.85),
-  init = 0
+  init = 0, 
+  cores = 2
   
 )
 
 
-summary(growth_model.1sex)
-plot(growth_model.1clutch)
+summary(growth_model.1)
+plot(growth_model.1)
 
+
+growth_model_pr=get_prior(
+  ## model 
+  bf(tarsus_scale ~ asym * exp(-exp(b)*exp(c)^age_days),
+     asym ~ 1 + FuniWE + GeneticSex+ (1|clutch_merge) + (1|RingId),
+     b ~  1 + FuniWE + GeneticSex+ (1|clutch_merge) + (1|RingId), 
+     c ~  1 + FuniWE + (1|RingId), #clutch and sex have no effect here
+     nl=TRUE),
+  
+  data=fledge_pheno_df, 
+  family = gaussian()
+)
