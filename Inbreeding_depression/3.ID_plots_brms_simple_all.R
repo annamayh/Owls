@@ -80,6 +80,13 @@ funi=ggplot(all_f_ests, aes(x=trait, y=Estimate, ymin=Q2.5, ymax=Q97.5,colour=tr
 
 funi
 
+ggsave(funi, file="Inbreeding_depression_owls/plots/id_simple_funi.png", 
+       width = 4, 
+       height=5)
+
+
+
+
 all_froh_ests=f_ests_tar_roh%>%
   rbind(f_ests_mass_roh, f_ests_bill_roh, f_ests_wing_roh)
 
@@ -95,6 +102,12 @@ froh=ggplot(all_froh_ests, aes(x=trait, y=Estimate, ymin=Q2.5, ymax=Q97.5,colour
   labs(title = "FROH", y="Inbreeding depression (\u03B2)")
 
 froh
+
+ggsave(froh, file="Inbreeding_depression_owls/plots/id_simple_froh.png", 
+       width = 4, 
+       height=5)
+
+
 
 funi+froh
 
@@ -154,6 +167,8 @@ IQR(tarsus_df$FuniWE) ## But IQR higher for Froh
 sd(tarsus_df$FHBD512gen)
 IQR(tarsus_df$FHBD512gen)
 
+median(tarsus_df$FuniWE)
+
 ## IQR measures spread of middle 50% of values
 ## but SD measures typical devation of individual values from mean so can be more affected by outlires
 
@@ -170,4 +185,5 @@ fvf=tarsus_df%>%
 
 
 ggMarginal(fvf, fill = "lightblue", size = 3)
+
 

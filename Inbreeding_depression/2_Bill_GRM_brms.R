@@ -42,7 +42,7 @@ mod_bill_all_GRM_Funi <- brm(BillLength ~  1 + FuniWE+GeneticSex+rank+SSgompertz
                                (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year),
                            data = bill_df,
                            prior=prior_bill,
-                           control=list(adapt_delta=0.98),
+                           control=list(adapt_delta=0.96),
                            data2 = list(Amat = GRM),
                            chains = 4,
                            cores=4,
