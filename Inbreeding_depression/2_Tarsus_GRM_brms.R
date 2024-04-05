@@ -35,7 +35,7 @@ mod_tarsus_all.3.grm <- brm(LeftTarsus ~  1 + FuniWE+GeneticSex+rank+SSgompertz(
                               (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year),
                             prior = prior,
                             data = tarsus_df,
-                            control=list(adapt_delta=0.98),
+                            control=list(adapt_delta=0.96),
                             data2 = list(Amat = GRM),
                             chains = 4,
                             cores=4,

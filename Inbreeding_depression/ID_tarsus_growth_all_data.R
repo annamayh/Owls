@@ -3,26 +3,26 @@
 library(tidyverse)
 library(brms)
 library(corpcor)
+library(viridis)
 
 setwd("/Users/ahewett1/Documents/")
 
 ##################################################################################
-########################### ~~ MASS ~~ #############################################
+########################### ~~ tarsus ~~ #############################################
 #####################################################################################
 
-mass_df=read.table("Inbreeding_depression_owls/pheno_df/mass_all_pheno_df.txt",sep=",", header=T)%>%
+tarsus_df=read.table("Inbreeding_depression_owls/pheno_df/tarsus_all_pheno_df.txt",sep=",", header=T)%>%
   select(-min_mes)%>%
-  mutate(mass_scale=Mass/100)%>%
-  filter(mass_scale<10) ## remove one id that obviously has wrong mass record 4201g (most likely 420g i hope)
+  mutate(tarsus_scale=LeftTarsus/100)
 
-mass_records=ggplot(mass_df, aes(x=age_days, y=Mass))+
+tarsus_records=ggplot(tarsus_df, aes(x=age_days, y=LeftTarsus))+
   geom_point(alpha=0.2, colour="black", size=2)+
   #xlim (0,1000)+
-  ylim(0,600)+
+  ylim(0,800)+
   theme_bw()+
-  labs(x="Age in days", y="Mass (g)")+
+  labs(x="Age in days", y="Tarsus length")+
   theme(text = element_text(size = 18))
-mass_records
+tarsus_records
 
 # ggsave(mass_records, file="Inbreeding_depression_owls/plots/mass_records.png", 
 #        width = 8, 
@@ -48,7 +48,7 @@ mass_records_cut
 # 
 
 
-check= mass_df%>%
+check= tarsus_df%>%
   filter(age_days<30)
 #1661 different ids measured before 25 days old 
 
@@ -56,18 +56,17 @@ check= mass_df%>%
 
 n_distinct(check$RingId) 
 
-mass_df$clutch_merge=as.factor(mass_df$clutch_merge)
-mass_df$GeneticSex=as.factor(mass_df$GeneticSex)
-mass_df$RingId=as.factor(mass_df$RingId)
-mass_df$year=as.factor(mass_df$year)
-mass_df$Observer=as.factor(mass_df$Observer)
-mass_df$rank=as.numeric(mass_df$rank)
+tarsus_df$clutch_merge=as.factor(tarsus_df$clutch_merge)
+tarsus_df$GeneticSex=as.factor(tarsus_df$GeneticSex)
+tarsus_df$RingId=as.factor(tarsus_df$RingId)
+tarsus_df$year=as.factor(tarsus_df$year)
+tarsus_df$Observer=as.factor(tarsus_df$Observer)
+tarsus_df$rank=as.numeric(tarsus_df$rank)
+
+n_distinct(tarsus_df$RingId)
 
 
-n_distinct(mass_df$RingId)
-
-
-prior_mass<- c(
+prior_tarsus<- c(
   prior(normal(3.5, 2), nlpar = "asym",  class="b"),##
   prior(normal(4.5, 1), nlpar = "b",  class="b"), ## 
   prior(normal(1, 0.5), nlpar = "c",  class="b"), ## 
@@ -85,43 +84,43 @@ prior_mass<- c(
 
 )
 
-growth_mass.mod=brm(
+growth_tarsus.mod=brm(
   ## model 
-  bf(mass_scale ~ asym * exp(-b*(c)^age_days),
+  bf(tarsus_scale ~ asym * exp(-b*(c)^age_days),
      asym ~ 1 + FuniWE + rank + GeneticSex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|RingId),
       b ~ 1 + FuniWE + rank + GeneticSex + (1|clutch_merge) + (1|RingId),
       c ~ 1 + FuniWE + rank + GeneticSex + (1|RingId), 
      nl=TRUE),
-  data=mass_df, 
+  data=tarsus_df, 
   family = gaussian(),
   chains = 4,
-  prior = prior_mass,
+  prior = prior_tarsus,
   control = list(adapt_delta = 0.85),
   init = 0, 
   cores = 4,
-   iter = 10000, 
-   warmup = 4000, 
-  thin=5
+  iter = 10000, 
+  warmup = 4000, 
+  thin = 5
   
 )
 
-summary(growth_mass.mod)
-plot(growth_mass.mod)
+summary(growth_tarsus.mod)
+plot(growth_tarsus.mod)
 
 
-saveRDS(growth_mass.mod,file="Inbreeding_depression_owls/Model_outputs/Growth_mass_funi_alldata.RDS")
+saveRDS(growth_tarsus.mod,file="Inbreeding_depression_owls/Model_outputs/Growth_tarsus_funi_alldata.RDS")
 
-growth_mass.mod=readRDS(file="Inbreeding_depression_owls/Model_outputs/Growth_mass_funi_alldata.RDS")
+growth_tarsus.mod=readRDS(file="Inbreeding_depression_owls/Model_outputs/Growth_tarsus_funi_alldata.RDS")
 
+## plot of CIs for F
 
-
-F_eff=fixef(growth_mass.mod, pars = c("asym_FuniWE"))%>%
-  rbind(fixef(growth_mass.mod, pars = c("b_FuniWE")))%>%
-  rbind(fixef(growth_mass.mod, pars = c("c_FuniWE")))%>%
+F_eff=fixef(growth_tarsus.mod, pars = c("asym_FuniWE"))%>%
+  rbind(fixef(growth_tarsus.mod, pars = c("b_FuniWE")))%>%
+  rbind(fixef(growth_tarsus.mod, pars = c("c_FuniWE")))%>%
   as.data.frame()%>%
   rownames_to_column(var="parameter")%>%
   separate_wider_delim(parameter, delim = "_", names = c("param","explanatory"))
-
+  
 
 F_eff
 
@@ -136,17 +135,18 @@ feff=ggplot(F_eff, aes(x=explanatory, y=Estimate, ymin=Q2.5, ymax=Q97.5, colour=
         title = element_text(size = 12), 
         legend.position = "none")+
   scale_colour_brewer(palette = "Dark2")+
-  labs(title="Inbreeding depression in mass paramters")
+  labs(title="Inbreeding depression in tarsus paramters")
 
 feff
-
-ggsave(feff, file="Inbreeding_depression_owls/plots/id_mass_growth_estimateCIs.png", 
+ 
+ggsave(feff, file="Inbreeding_depression_owls/plots/id_tarsus_growth_estimateCIs.png", 
        width = 7, 
        height=5)
 
+  
 
 
-
+## plotting predicted slopes   
 library(showtext)
 female = intToUtf8(9792)
 male = intToUtf8(9794)
@@ -178,43 +178,3 @@ id_mass
 ggsave(id_mass, file="Inbreeding_depression_owls/plots/id_mass_growth.png", 
        width = 8, 
        height=7)
-
-
-###############################################################################
-## same model using FROH #################################################
-##########################################################################
-
-growth_mass.mod.froh=brm(
-  ## model 
-  bf(mass_scale ~ asym * exp(-b*(c)^age_days),
-     asym ~ 1 + FHBD512gen + rank + GeneticSex +(1|clutch_merge) + (1|Observer)+(1|year),
-     b ~ 1 + FHBD512gen + rank + GeneticSex + (1|clutch_merge),
-     c ~ 1 + FHBD512gen + GeneticSex, 
-     nl=TRUE),
-  data=mass_df, 
-  family = gaussian(),
-  chains = 4,
-  prior = prior_mass,
-  control = list(adapt_delta = 0.85),
-  init = 0, 
-  cores = 4,
-  iter = 10000, 
-  warmup = 3000
-  
-)
-
-summary(growth_mass.mod.froh)
-plot(growth_mass.mod.froh)
-
-
-saveRDS(growth_mass.mod.froh,file="Inbreeding_depression_owls/Model_outputs/Growth_mass_FROH_alldata.RDS")
-
-
-
-
-
-
-
-
-
-

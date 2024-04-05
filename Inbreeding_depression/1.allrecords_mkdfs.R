@@ -19,11 +19,16 @@ owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legac
 owl_sex=read.table("Inbreeding_depression_owls/GeneticSex_3K_RP548.txt", header = T) # sex info 
 ## info on clutch 
 owl_bird=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
-  select(RingId, BornClutchId, RaisedClutchId, SiteId, HatchDate)%>%
+  select(RingId, BornClutchId, RaisedClutchId, SiteId, Nestbox, HatchDate)%>%
   na.omit()%>%
   separate_wider_delim(HatchDate, delim = " ", names = c("hatch_date",NA))%>%
   mutate(hatch_date=as.Date(hatch_date, format = "%d/%m/%Y"))%>%
-  unite("clutch_merge", BornClutchId:RaisedClutchId, remove = F)# merging raised and born clutch to one variable 
+  unite("clutch_merge", BornClutchId:RaisedClutchId, remove = F)%>%# merging raised and born clutch to one variable 
+  mutate(SiteId=as.character(SiteId))%>%
+  mutate(nestboxID=case_when( ## creating new variable for nestbox id for when sites have 2 nestboxes
+    Nestbox=="" ~ SiteId, 
+    Nestbox!="" ~ Nestbox, 
+  ))
   
 
 ##merge all df together by RingID
@@ -56,11 +61,13 @@ all_pheno_df=fledge_mes_rep%>%
   filter(!age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
   as.data.frame()
 
+
+
 n_distinct(all_pheno_df$RingId) ## 2300 diff ids and total of 17073 obs but some have missing info for pheno traits
 
 ## ~~ Tarsus df ~~ ###
 tarsus_df_all=all_pheno_df%>%
-  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes)%>% ##keep only pheno info interested in
+  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes, nestboxID)%>% ##keep only pheno info interested in
   na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
   unique() ## duplicates from repeated tracking ids on 
 
@@ -71,7 +78,7 @@ n_distinct(tarsus_df_all$RingId) ##2299 ids and 7102 records
 
 ## ~~ Mass df ~~ ####
 mass_df_all=all_pheno_df%>%
-  select(RingId, Mass, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year,min_mes)%>% ##remove phenotype info we may not have 
+  select(RingId, Mass, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year,min_mes, nestboxID)%>% ##remove phenotype info we may not have 
   na.omit(Mass,FuniWE) %>%#remove NAs
   unique() ## duplicates from repeated tracking ids on 
 
@@ -80,7 +87,7 @@ n_distinct(mass_df_all$RingId) ##2300 ids with mass records, 11150 records
 
 ## ~~ Bill length  ~~ ####
 bill_df_all=all_pheno_df%>%
-  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes)%>% ##remove phenotype info we may not have 
+  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes, nestboxID)%>% ##remove phenotype info we may not have 
   na.omit(BillLength,FuniWE) %>%#remove NAs
   unique() ## duplicates from repeated tracking ids on 
 
@@ -91,7 +98,7 @@ n_distinct(bill_df_all$RingId) ##2298 ids with records, 6746
 # ~~ wing length ~~  ####
 ## more records for wing length than tarsus so maybe good to look at both??
 wing_df_all=all_pheno_df%>%
-  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes)%>% ##remove phenotype info we may not have 
+  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,GeneticSex,rank, clutch_merge, Observer, year, min_mes, nestboxID)%>% ##remove phenotype info we may not have 
   na.omit(LeftWing,FuniWE) #remove NAs
 
 n_distinct(wing_df_all$RingId) ##2296 ids with records, 10747 records
@@ -188,3 +195,11 @@ summary(fm4)
 plot(wing_df_all$age_days, wing_df_all$LeftWing, xlim = c(0,90))
 curve(317*exp(-4.19*0.95^x), from = 0, to=90, add = TRUE, col="red", lwd=2)
 
+
+
+errors=fledge_mes_rep%>%
+  mutate(age_days=as.numeric(date_diff))%>%
+  group_by(RingId)%>%
+  mutate(min_mes=min(age_days))%>%
+  filter(age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
+  as.data.frame()
