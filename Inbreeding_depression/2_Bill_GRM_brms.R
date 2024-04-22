@@ -9,7 +9,8 @@ library(corpcor)
 
 
 bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)%>%
-  select(-min_mes)
+  select(-min_mes)%>%
+  mutate(bill_scale=BillLength/100)
 
 
 bill_df$clutch_merge=as.factor(bill_df$clutch_merge)

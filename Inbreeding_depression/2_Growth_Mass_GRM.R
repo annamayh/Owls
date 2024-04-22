@@ -67,4 +67,4 @@ growth_mass.mod.GRM=brm(
 )
 
 
-saveRDS(growth_mass.mod.GRM,file="./outputs/growth_mass_all_GRM_Funi.RDS")
+saveRDS(growth_mass.mod.GRM,file="./outputs/growth_mass_GRM_Funi.RDS")
