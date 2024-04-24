@@ -39,12 +39,28 @@ tarsus_records
 
 
 check= tarsus_df%>%
-  filter(age_days<30)
+  filter(age_days<25)
 #1661 different ids measured before 25 days old 
 
 #3153 records in 2083 ids before 30 days mark 
 
 n_distinct(check$RingId) 
+table(check$year) 
+table(check$age_days) 
+
+check%>%
+  group_by(age_days)%>%
+  summarise(n=n())%>%
+ggplot(aes(x=age_days, y=n))+
+  geom_point()
+
+check%>%
+  group_by(year)%>%
+  summarise(n=n())%>%
+  ggplot(aes(x=year, y=n))+
+  geom_point()
+
+
 
 tarsus_df$clutch_merge=as.factor(tarsus_df$clutch_merge)
 tarsus_df$GeneticSex=as.factor(tarsus_df$GeneticSex)

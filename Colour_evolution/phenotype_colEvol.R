@@ -6,29 +6,12 @@ library(sequoia)
 
 setwd("/Users/ahewett1/Documents")
 
+mc1r=read.csv("Gene_drop/MC1R.csv", header = T)%>%
+  rename(RingId=Ring, MC1R=V126I)
 
-# load the data with many phenotypes, not all are useful
-NewPhenoColor_Order3K = read.table("Gene_drop/NewPhenoColor_Order3K.txt", header = TRUE)
-# load the table with the genotypes, you will meed the package "SNPRelate"
-gen_mat <- snpgdsGetGeno('Gene_drop/All3102_NewNames_RP502SNPs.variantsList.gds')
-# change the genotypes so 0 mean homozygote white
-gen_mat[,1] = abs(gen_mat[,1]-2)
-gen_mat[,2] = abs(gen_mat[,2]-2)
-# make females haploid
-gen_mat[NewPhenoColor_Order3K$Sex==2 & gen_mat[,3]==2 & (! is.na(NewPhenoColor_Order3K$Sex)),3] = 1
-
-# format the table, I now realise I could have just send this one ... 
-TabSummary = data.frame(NewPhenoColor_Order3K$ID, NewPhenoColor_Order3K$MeanColor, NewPhenoColor_Order3K$SurfaceBlackSpotsCm, NewPhenoColor_Order3K$SexWGS, NewPhenoColor_Order3K$StageBin, gen_mat[,1], gen_mat[,2], gen_mat[,3])
-colnames(TabSummary) = c("ID", "MeanColor", "SurfaceBlackSpotsCm", "SexWGS", "StageBin", "GenoCorin", "GenoMC1R", "GenoZ")
-TabSummary = TabSummary[! is.na(TabSummary$ID),]
-rownames(TabSummary) = TabSummary$ID
-
-# Now you can play with the table :)
-
-
-genotypes=TabSummary%>%
-  select(ID, GenoCorin, GenoMC1R, GenoZ)%>%
-  rename(RingId=ID)
+mc1r[mc1r=="VV"]=2
+mc1r[mc1r=="VI"]=1
+mc1r[mc1r=="II"]=0
 
 
 ## pedigree 
@@ -36,8 +19,8 @@ genotypes=TabSummary%>%
 ped_birth_yr2=ped_birth_yr%>%
   unique()%>%
   mutate(year=as.numeric(year))%>%
-  filter(year>=1995)%>%
-  filter(year<2020)%>%
+   filter(year>=1997)%>%
+   filter(year<2018)%>%
   mutate(cohort=(year-min(year))+1)%>%
   filter(RingId!="889913") ##sort this out later
 
@@ -46,39 +29,49 @@ cohort_yr=ped_birth_yr2%>%
   unique()
 
 
-owl_col_gens=genotypes%>%
+owl_col_gens=mc1r%>%
   right_join(ped_birth_yr2)
 
+owl_col_gens$MC1R=as.numeric(owl_col_gens$MC1R)
 
 owl.summ <- summary_cohort(id = owl_col_gens$RingId,
-                               mother = owl_col_gens$mumID,
-                               father = owl_col_gens$dadID,
+                               mother = owl_col_gens$dadid,
+                               father = owl_col_gens$momid,
                                cohort = owl_col_gens$cohort,
-                               genotype = owl_col_gens$GenoMC1R)
+                               genotype = owl_col_gens$MC1R)
+
+## Locus summary AA, AB, BB corresponds to 0 (II), 1, 2 (VV)
 
 owl.summ
 
 
 owl.summ%>%left_join(cohort_yr)%>%
-ggplot(aes(year, B)) +
+ggplot(aes(year, A)) +
   geom_line() +
   stat_smooth(method = "lm") +
-  ggtitle("Temporal dynamics of red allele")
+  ggtitle("Temporal dynamics of 'I' allele")
 
 owl.summ%>%left_join(cohort_yr)%>%
-ggplot(aes(year, PropGenotyped)) +
+ggplot(aes(cohort, PropGenotyped)) +
   geom_line()  +
   ggtitle("Proportion of Genotyped IDs per year")
 
 
 
 owl.mc1r <- genedrop_snp(owl_col_gens$RingId,
-                         mother = owl_col_gens$mumID,
-                         father = owl_col_gens$dadID,
+                         mother = owl_col_gens$momid,
+                         father = owl_col_gens$dadid,
                          cohort = owl_col_gens$cohort,
-                         genotype = owl_col_gens$GenoMC1R
+                         genotype = owl_col_gens$MC1R,
                           nsim = 1000,
-                           n_founder_cohorts = 5,
-                           fix_founders = F,
-                           verbose = T,
-                           interval = 200)
+                          n_founder_cohorts = 5,
+                          fix_founders = F,
+                          verbose = T,
+                          interval = 200)
+
+
+owl.mc1r.summ <- summary_genedrop(owl.mc1r)
+plot_genedrop_results(owl.mc1r.summ)
+
+
+plot_genedrop_cumulative_change(owl.mc1r.summ)
