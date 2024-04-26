@@ -56,6 +56,13 @@ ggplot(aes(cohort, PropGenotyped)) +
   geom_line()  +
   ggtitle("Proportion of Genotyped IDs per year")
 
+owl.summ%>%left_join(cohort_yr)%>%
+ggplot(aes(year, PropFounders)) +
+  geom_line() +
+  ggtitle("Proportion of Founder IDs per cohort")
+
+
+
 
 
 owl.mc1r <- genedrop_snp(owl_col_gens$RingId,

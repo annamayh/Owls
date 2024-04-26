@@ -7,7 +7,7 @@ library(corpcor)
 #####################################################################################
 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)%>% ##
-  mutate(age_acc=362*exp(-4.01*0.893^age_days)) ## account for age using gompertz growth
+  mutate(age_acc=3.62*exp(-4.01*0.893^age_days)) ## account for age using gompertz growth
 
 
 mass_df$clutch_merge=as.factor(mass_df$clutch_merge)
@@ -34,17 +34,17 @@ grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
-prior_mass=c(prior(student_t(3, 360,65), class = "Intercept"), ## 
-             prior(student_t(3,0,65), class = "sd"),
-             prior(student_t(3,0,65), class = "sigma"),
-             prior(cauchy(0, 2), class = "sd", group="RingId_pe"))
+prior_mass=c(prior(student_t(3, 3.6, 6.5), class = "Intercept"), ## 
+             prior(student_t(3, 0, 6.5), class = "sd"),
+             prior(student_t(3, 0, 6.5), class = "sigma"),
+             prior(cauchy(0, 0.5), class = "sd", group="RingId_pe"))
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_mass_GRM.Funi <- brm(Mass ~  1 + FuniWE+GeneticSex+rank+age_acc+CH1903X+CH1903Y+
+mod_mass_GRM.Funi <- brm(mass_scale ~  1 + FuniWE+GeneticSex+rank+age_acc+CH1903X+CH1903Y+
                                  (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year)+(1|nestboxID),
                                data = mass_df,
-                               control=list(adapt_delta=0.95),
+                               control=list(adapt_delta=0.9),
                                data2 = list(Amat = GRM),
                                chains = 4,
                                cores=4,

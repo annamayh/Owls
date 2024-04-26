@@ -67,6 +67,10 @@ plot(bill_df_all$age_days, bill_df_all$BillLength, xlim = c(0,90))
 curve(184*exp(-0.99*0.932^x), from = 0, to=90, add = TRUE, col="red", lwd=2)
 
 
+plot(bill_df_all$age_days, bill_df_all$bill_scale, xlim = c(0,90))
+curve(1.84*exp(-0.99*0.932^x), from = 0, to=90, add = TRUE, col="red", lwd=2)
+
+
 
 ### WING #######
 
@@ -87,6 +91,11 @@ summary(fm4)
 
 plot(wing_df_all$age_days, wing_df_all$LeftWing, xlim = c(0,100))
 curve(298*exp(-4.19*0.945^x), from = 0, to=100, add = TRUE, col="red", lwd=2)
+
+
+plot(wing_df_all$age_days, wing_df_all$wing_scale, xlim = c(0,100))
+curve(2.98*exp(-4.19*0.945^x), from = 0, to=100, add = TRUE, col="red", lwd=2)
+
 
 ##need to take b down to 3 dp 
 

@@ -7,7 +7,7 @@ library(corpcor)
 #####################################################################################
 
 wing_df=read.table("./input_dfs/wing_all_pheno_df.txt",sep=",", header=T)%>%
-  mutate(age_acc=298*exp(-4.19*0.945^age_days)) ## account for age unsing gompertz growth
+  mutate(age_acc=2.98*exp(-4.19*0.945^age_days)) ## account for age unsing gompertz growth
 
 
 wing_df$clutch_merge=as.factor(wing_df$clutch_merge)
@@ -34,17 +34,17 @@ grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
-prior_wing=c(prior(student_t(3, 300,65), class = "Intercept"), ## 
-             prior(student_t(3,0,65), class = "sd"),
-             prior(student_t(3,0,65), class = "sigma"),
-             prior(cauchy(0, 2), class = "sd", group="RingId_pe"))
+prior_wing=c(prior(student_t(3, 3, 6.5), class = "Intercept"), ## 
+             prior(student_t(3, 0, 6.5), class = "sd"),
+             prior(student_t(3, 0, 6.5), class = "sigma"),
+             prior(cauchy(0, 0.5), class = "sd", group="RingId_pe"))
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_wing_GRM.Funi <- brm(LeftWing ~  1 + FuniWE+GeneticSex+rank+age_acc+CH1903X+CH1903Y+
+mod_wing_GRM.Funi <- brm(wing_scale ~  1 + FuniWE+GeneticSex+rank+age_acc+CH1903X+CH1903Y+
                              (1|gr(RingId, cov=Amat))+(1|RingId_pe)+(1|Observer)+(1|clutch_merge)+(1|year)+(1|nestboxID),
                            data = wing_df,
-                           control=list(adapt_delta=0.95),
+                           control=list(adapt_delta=0.85),
                            data2 = list(Amat = GRM),
                            chains = 4,
                            cores=4,

@@ -317,6 +317,7 @@ full_remaining_mismatch_parents=full_compare_parentage$Mismatch
 ```
 ```{r, echo=FALSE}
 ##print(remaining_mismatch_parents)
+seq_reconstr_out$DummyIDs
 
 ```
 
@@ -571,6 +572,19 @@ mes%>%
 
 ```
 
+```{r, echo=FALSE}
+life2%>%
+  filter(RingId=="M032228")
+```
+```{r, echo=FALSE}
+mes%>%
+  filter(RingId=="M032228")%>%
+    head(n = c(7, 8))
 
+```
 
+M032228
+```{r}
+GRM['M032425', 'M032228']
+```
 
