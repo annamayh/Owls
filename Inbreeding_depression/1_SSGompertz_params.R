@@ -97,7 +97,7 @@ plot(wing_df_all$age_days, wing_df_all$wing_scale, xlim = c(0,100))
 curve(2.98*exp(-4.19*0.945^x), from = 0, to=100, add = TRUE, col="red", lwd=2)
 
 
-##need to take b down to 3 dp 
+##need to take c down to 3 dp 
 
 
 

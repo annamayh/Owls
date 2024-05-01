@@ -38,7 +38,7 @@ prior_mass=c(prior(student_t(3, 330, 60), class = "Intercept"), ##
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_mass_GRM.Funi <- brm(Mass ~  1 + FuniWE+sex+rank+age_acc+
+mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen+sex+rank+age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID) + (1|rank),                         
                          data = mass_df,
@@ -52,8 +52,8 @@ mod_mass_GRM.Funi <- brm(Mass ~  1 + FuniWE+sex+rank+age_acc+
                          thin=5
 )
 
-summary(mod_mass_GRM.Funi) ###
+summary(mod_mass_GRM.FROH) ###
 
-saveRDS(mod_mass_GRM.Funi,file="./outputs/1.2.ID_mass_GRM_Funi_unscaled.RDS") ##
+saveRDS(mod_mass_GRM.FROH,file="./outputs/1.2.ID_mass_GRM_FROH_unscaled.RDS") ##
 
 

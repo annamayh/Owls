@@ -39,7 +39,7 @@ prior_wing=c(prior(student_t(3, 200, 90), class = "Intercept"), ##
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_wing_GRM.Funi <- brm(LeftWing ~  1 + FuniWE+sex+rank+age_acc+
+mod_wing_GRM.Funi <- brm(LeftWing ~  1 + FHBD512gen+sex+rank+age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID) + (1|rank),
                          data = wing_df,

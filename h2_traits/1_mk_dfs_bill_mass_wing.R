@@ -1,17 +1,7 @@
-## making df for : ###
-### modelling inbreeding depression in tarsus length  ###
-## using glmm, and animal models (ped RM and GRM)
-## as we take into account clutch info most ids are ones that we have fledeling records from 
 library(tidyverse)
 
 setwd("/Users/ahewett1/Documents")
 
-
-##Fgrm and FROH from elo
-inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header = T)%>%
-  rename(RingId=INDVs)
-
-#table(owl_mes$EstimatedGrowthStage)
 
 ## reading in phenotype info
 owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)%>%
@@ -22,33 +12,31 @@ owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legac
     grepl("Adult", EstimatedGrowthStage) ~ "adult",
     EstimatedGrowthStage=="Fledgling"~"juvenile", 
     EstimatedGrowthStage=="Nestling or Fledgling"~"juvenile", 
-    ))
+  ))
 
 #table(owl_mes$EstimatedGrowthStage)
-
 
 
 owl_sex_g=read.table("Inbreeding_depression_owls/GeneticSex_3K_RP548.txt", header = T) # sex info 
 owl_sex_p=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
   select(RingId, PhenotypeSex)
-
+  
 owl_sex_p$phen_sex=if_else(owl_sex_p$PhenotypeSex=="Male", 1, 
-                           if_else(owl_sex_p$PhenotypeSex=="Female",2, 
-                                   NA))
+                        if_else(owl_sex_p$PhenotypeSex=="Female",2, 
+                                NA))
 
 sex=owl_sex_g%>%
   left_join(owl_sex_p, by='RingId')%>%
-  mutate(sex=case_when(
-    GeneticSex==1 ~ 1, ## male = 1, female =2
-    GeneticSex==2 ~ 2, 
-    (is.na(GeneticSex)&phen_sex==1) ~ 1,
-    (is.na(GeneticSex)&phen_sex==2) ~ 2,
-    (GeneticSex==1&phen_sex==2) ~ 1,
-    (GeneticSex==2&phen_sex==1) ~ 2))%>%
-  as.data.frame() %>%
-  unique()%>%
-  select(RingId, sex)
-
+mutate(sex=case_when(
+  GeneticSex==1 ~ 1, ## male = 1, female =2
+  GeneticSex==2 ~ 2, 
+  (is.na(GeneticSex)&phen_sex==1) ~ 1,
+  (is.na(GeneticSex)&phen_sex==2) ~ 2,
+  (GeneticSex==1&phen_sex==2) ~ 1,
+  (GeneticSex==2&phen_sex==1) ~ 2))%>%
+  as.data.frame() 
+  
+  
 
 owl_site=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Site.csv", header = T)%>%
   select(SiteId, CH1903X, CH1903Y)%>%
@@ -67,12 +55,10 @@ owl_bird=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Lega
     Nestbox!="" ~ Nestbox, 
   ))%>%
   left_join(owl_site)
-  
+
 
 ##merge all df together by RingID
-fledge_merge=inb%>%
-  inner_join(owl_mes)%>%
-  inner_join(sex)%>%
+fledge_merge=owl_mes%>%
   inner_join(owl_bird,relationship = "many-to-many")%>%
   separate_wider_delim(hatch_date, delim = "-", cols_remove=F,names = c("year","month",NA))%>%
   mutate(month=as.numeric(month))
@@ -88,9 +74,35 @@ ranked=fledge_merge%>%
   mutate(rank = rank(hatch_date, ties.method= "min")) %>%
   arrange(hatch_date)
 
-#combine with ranked info
+
+
+
+ped_corrected=read.table("sequioa/pedigreeCORRECTED.tab", header = T)%>%
+  select(-sex)%>%
+  mutate(dadid=case_when(
+    momid=="M026267" ~"M026267", 
+    dadid=="M026658" ~ NA,
+    dadid=="M031195" ~ "M041195",
+    TRUE ~ dadid
+  ))%>%
+  mutate(momid=case_when( ## found during first parentage assigment
+    dadid=="M026658" ~ "M026658",## M026267   recorded as female but actually a male 
+    momid=="M027000" ~ "M022696",       ## this id was ringed twice 
+    
+    momid=="M026267" ~ NA,       ## M026658 recorded as male but genetic sex is female
+    TRUE ~ momid 
+    
+  ))%>%
+  mutate(id=case_when(
+    id=="M011867" ~ "889913",
+    TRUE ~ id))%>%
+  rename(RingId=id, MumId=momid, DadId=dadid)
+
+#combine all df info together
 fledge_mes_rep=fledge_merge%>%
-  inner_join(ranked,relationship = "many-to-many") # because many repeated measures for the same id
+  inner_join(ranked,relationship = "many-to-many")%>%# because many repeated measures for the same id
+  left_join(sex, relationship = "many-to-many")%>%
+  left_join(ped_corrected, relationship = "many-to-many")
 
 ###  
 all_pheno_df=fledge_mes_rep%>%
@@ -101,14 +113,20 @@ all_pheno_df=fledge_mes_rep%>%
   as.data.frame()%>%
   mutate(julian_hatchdate=format(hatch_date, "%j"))
 
+## now filter ids for ones we have GRM for 
+grm=read_rds("sequioa/All3085_AUTOSAUMES_RP502SNPs.RDS")
+
+all_pheno_df_filt=all_pheno_df%>%
+  filter(RingId %in% colnames(grm))
+
+n_distinct(all_pheno_df_filt$RingId) ## 2300 diff ids and total of 17073 obs but some have missing info for pheno traits
 
 
-n_distinct(all_pheno_df$RingId) ## 2300 diff ids and total of 17073 obs but some have missing info for pheno traits
 
 ## ~~ Tarsus df ~~ ###
-tarsus_df_all=all_pheno_df%>%
-  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y)%>% ##keep only pheno info interested in
-  na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
+tarsus_df_all=all_pheno_df_filt%>%
+  select(RingId, LeftTarsus, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y, MumId, DadId)%>% ##keep only pheno info interested in
+  na.omit(LeftTarsus) %>% #remove NAs for important bits
   unique()%>% ## duplicates from repeated tracking ids on \
   mutate(tarsus_scale=LeftTarsus/100)%>%
   filter(min_mes>0)
@@ -121,9 +139,9 @@ n_distinct(tarsus_df_all$RingId) ##2299 ids and 7102 records
 
 
 ## ~~ Mass df ~~ ####
-mass_df_all=all_pheno_df%>%
-  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year,min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
-  na.omit(Mass,FuniWE) %>%#remove NAs
+mass_df_all=all_pheno_df_filt%>%
+  select(RingId, Mass, age_days,sex,rank, clutch_merge, Observer, year,min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y, MumId, DadId)%>% ##remove phenotype info we may not have 
+  na.omit(Mass) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   filter(Mass<1000) %>%#remove 1 incorrect mass record 
   mutate(mass_scale=Mass/100)%>%
@@ -136,9 +154,9 @@ table(mass_df_all$stage)
 
 
 ## ~~ Bill length  ~~ ####
-bill_df_all=all_pheno_df%>%
-  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
-  na.omit(BillLength,FuniWE) %>%#remove NAs
+bill_df_all=all_pheno_df_filt%>%
+  select(RingId, BillLength, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y, MumId, DadId)%>% ##remove phenotype info we may not have 
+  na.omit(BillLength) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(bill_scale=BillLength/100)%>% ## rescaling for ease of model convergence
   filter(min_mes>0)
@@ -152,9 +170,9 @@ table(bill_df_all$stage)
 
 # ~~ wing length ~~  ####
 ## more records for wing length than tarsus so maybe good to look at both??
-wing_df_all=all_pheno_df%>%
-  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
-  na.omit(LeftWing,FuniWE) %>%#remove NAs
+wing_df_all=all_pheno_df_filt%>%
+  select(RingId, LeftWing, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y, MumId, DadId)%>% ##remove phenotype info we may not have 
+  na.omit(LeftWing) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(wing_scale=LeftWing/100)%>% ## rescaling for ease of model convergence
   filter(min_mes>0)
@@ -166,27 +184,18 @@ table(wing_df_all$stage)
 
 
 write.table(bill_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",
+            file = "Gen_arch_owls/pheno_df/bill_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
 
 write.table(mass_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/mass_all_pheno_df.txt",
+            file = "Gen_arch_owls/pheno_df/mass_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
 
 write.table(tarsus_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/tarsus_all_pheno_df.txt",
+            file = "Gen_arch_owls/pheno_df/tarsus_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
 
 write.table(wing_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/wing_all_pheno_df.txt",
+            file = "Gen_arch_owls/pheno_df/wing_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
 
-
-####3
-## none have measurements at this observation date ... so perhaps its the obs date that is wrong 
-errors=fledge_mes_rep%>%
-  mutate(age_days=as.numeric(date_diff))%>%
-  group_by(RingId)%>%
-  mutate(min_mes=min(age_days))%>%
-  filter(age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
-  as.data.frame()
