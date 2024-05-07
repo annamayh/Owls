@@ -18,8 +18,6 @@ bill_df$Observer=as.factor(bill_df$Observer)
 bill_df$nestboxID=as.factor(bill_df$nestboxID)
 
 bill_df$rank=as.numeric(bill_df$rank)
-#bill_df$CH1903X=as.numeric(bill_df$CH1903X) # locations of the nestboxes
-#bill_df$CH1903Y=as.numeric(bill_df$CH1903Y)
 
 
 ## read in GRM
@@ -36,21 +34,24 @@ prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ##
              prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
 
 
-## slight trouble converging when using default number of itts so increased and using priors
-mod_bill_GRM.Funi <- brm(BillLength ~  1 + FuniWE+sex+age_acc+
-                           (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
-                           (1|year) + (1|month) + (1|nestboxID) + (1|rank),
-                         data = bill_df,
-                         control=list(adapt_delta=0.85),
-                         data2 = list(Amat = GRM),
-                         chains = 4,
-                         cores=4,
-                         prior=prior_bill, ##
-                         iter = 50000,
-                         warmup = 10000,
-                         thin=5
+mod_bill_GRM.split_stage_h2_inter <- brm(
+  
+  bf(BillLength ~  1 +sex+age_acc+rank+(FuniWE*gr_stage)+# interaction of F with stage to see if we can run it all in one big model 
+       (0 + gr_stage||gr(RingId, cov=Amat)) + (0 + gr_stage||RingId_pe) + (0 + gr_stage||Observer) + (0 + gr_stage||clutch_merge) +
+       (0 + gr_stage||year) + (0 + gr_stage||month) + (0 + gr_stage||nestboxID),
+     sigma ~ gr_stage-1), 
+  
+  data = bill_df,
+  control=list(adapt_delta=0.95),
+  data2 = list(Amat = GRM),
+  chains = 4,
+  cores=4,
+  prior=prior_bill, ##
+  iter = 50000,
+  warmup = 10000,
+  thin=5
 )
 
-summary(mod_bill_GRM.Funi) ###
+summary(mod_bill_GRM.split_stage_h2_inter) ###
 
-saveRDS(mod_bill_GRM.Funi,file="./outputs/1.1.ID_bill_GRM_Funi_unscaled.RDS") ##
+saveRDS(mod_bill_GRM.split_stage_h2_inter,file="./outputs/2_split_stages/2.1.Bill_split_stage_h2_PLUSinter.RDS") ##

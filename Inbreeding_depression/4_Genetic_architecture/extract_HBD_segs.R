@@ -1,0 +1,53 @@
+library(RZooRoH)
+library(tidyverse)
+
+setwd("/Users/ahewett1/Documents")
+
+
+
+load("Inbreeding_depression_owls/ROH_regions/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_Super-Scaffold_12.RData")
+
+
+Mod@krates
+
+scaffold=data_Rohs@chrnames
+
+
+snp_window_size=200
+ids_HBD_chr=list()
+number_ids=data_Rohs@nind
+
+
+for (id in 1:number_ids){
+  
+      id_ibc_seg_list <- list()
+      seed=0
+      for (window in seq(from = 1, to = which.max(data_Rohs@bp) , by = snp_window_size)){ # from first snp position to last snp position in chr 
+          
+          seed=seed+1
+          overlap=snp_window_size-1 ## no overalap 
+          y1 <- probhbd(zres = loc_mod, ## created from zoorun
+                        zooin = data_Rohs, ## zoo data
+                        id = id, ## specific id
+                        chrom = 1, ## as it has been run per chromosome, chr number always =1
+                        startPos = data_Rohs@bp[window], ## snp bp at start of window 
+                        endPos = data_Rohs@bp[window+overlap]) ## by snp window size
+          ## T = base pop for HBD segs .. defualt all HBD segs 
+
+          seg_ibc=mean(y1) # get mean pr HBD for window
+          id_ibc_seg_list[[seed]] <-  seg_ibc ## mean pr of being HBD for specific section 
+
+      }
+      
+      ids_HBD_chr[[id]] <- do.call(cbind, id_ibc_seg_list) ## adding ids in list
+      
+      if (id %% 200 == 0) {
+        print(paste0("Finished ID ", id))
+      }
+}
+
+
+m_HBD_segs=do.call(rbind, ids_HBD_chr) ## 
+
+row.names(m_HBD_segs)=data_Rohs@sample_ids
+colnames(m_HBD_segs) <- c(paste0("pr_HBD_", scaffold, "_wind_", 1:seed))

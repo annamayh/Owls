@@ -99,7 +99,13 @@ all_pheno_df=fledge_mes_rep%>%
   mutate(min_mes=min(age_days))%>%
   filter(!age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
   as.data.frame()%>%
-  mutate(julian_hatchdate=format(hatch_date, "%j"))
+  mutate(julian_hatchdate=format(hatch_date, "%j"))%>%
+  mutate(gr_stage=case_when(
+    age_days<=180 ~ "Juvenile", 
+    age_days>180 ~ "Adult"
+  ))%>%
+  filter(min_mes>0)
+
 
 
 
@@ -107,62 +113,57 @@ n_distinct(all_pheno_df$RingId) ## 2300 diff ids and total of 17073 obs but some
 
 ## ~~ Tarsus df ~~ ###
 tarsus_df_all=all_pheno_df%>%
-  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y)%>% ##keep only pheno info interested in
+  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month)%>% ##keep only pheno info interested in
   na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
   unique()%>% ## duplicates from repeated tracking ids on \
-  mutate(tarsus_scale=LeftTarsus/100)%>%
-  filter(min_mes>0)
+  mutate(tarsus_scale=LeftTarsus/100)
 
-table(tarsus_df_all$stage)
+table(tarsus_df_all$gr_stage)
 
-n_distinct(tarsus_df_all$RingId) ##2299 ids and 7102 records
+n_distinct(tarsus_df_all$RingId) ##
 ## adding extra info from other life stages doesnt increase the number of ids but does inc the number of records by ~ 500 for each  
 ## most of the ids are ones we have info from clutch etc. 
 
 
 ## ~~ Mass df ~~ ####
 mass_df_all=all_pheno_df%>%
-  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year,min_mes, nestboxID, stage, julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
+  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month)%>% ##remove phenotype info we may not have 
   na.omit(Mass,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   filter(Mass<1000) %>%#remove 1 incorrect mass record 
-  mutate(mass_scale=Mass/100)%>%
-  filter(min_mes>0)
-
+  mutate(mass_scale=Mass/100)
 
 n_distinct(mass_df_all$RingId) ##2300 ids with mass records, 11150 records
 
-table(mass_df_all$stage)
+table(mass_df_all$gr_stage)
 
 
 ## ~~ Bill length  ~~ ####
 bill_df_all=all_pheno_df%>%
-  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
+  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
   na.omit(BillLength,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
-  mutate(bill_scale=BillLength/100)%>% ## rescaling for ease of model convergence
-  filter(min_mes>0)
+  mutate(bill_scale=BillLength/100) ## rescaling for ease of model convergence
 
 
 
 n_distinct(bill_df_all$RingId) ##2298 ids with records, 6746
 
-table(bill_df_all$stage)
+table(bill_df_all$gr_stage)
 
 
 # ~~ wing length ~~  ####
 ## more records for wing length than tarsus so maybe good to look at both??
 wing_df_all=all_pheno_df%>%
-  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, min_mes, nestboxID, stage,julian_hatchdate, month, CH1903X, CH1903Y)%>% ##remove phenotype info we may not have 
+  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
   na.omit(LeftWing,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
-  mutate(wing_scale=LeftWing/100)%>% ## rescaling for ease of model convergence
-  filter(min_mes>0)
+  mutate(wing_scale=LeftWing/100) ## rescaling for ease of model convergence
 
 
 n_distinct(wing_df_all$RingId) ##2296 ids with records, 10747 records
 
-table(wing_df_all$stage)
+table(wing_df_all$gr_stage)
 
 
 write.table(bill_df_all,
@@ -190,3 +191,5 @@ errors=fledge_mes_rep%>%
   mutate(min_mes=min(age_days))%>%
   filter(age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
   as.data.frame()
+
+

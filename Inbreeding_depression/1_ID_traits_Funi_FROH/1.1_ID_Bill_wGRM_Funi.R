@@ -37,9 +37,9 @@ prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ##
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_bill_GRM.FROH <- brm(BillLength ~  1 + FHBD512gen +sex+age_acc+
+mod_bill_GRM.Funi <- brm(BillLength ~  1 + FuniWE+sex+age_acc+rank+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
-                           (1|year) + (1|month) + (1|nestboxID) + (1|rank),
+                           (1|year) + (1|month) + (1|nestboxID),
                          data = bill_df,
                          control=list(adapt_delta=0.85),
                          data2 = list(Amat = GRM),
@@ -51,6 +51,6 @@ mod_bill_GRM.FROH <- brm(BillLength ~  1 + FHBD512gen +sex+age_acc+
                          thin=5
 )
 
-summary(mod_bill_GRM.FROH) ###
+summary(mod_bill_GRM.Funi) ###
 
-saveRDS(mod_bill_GRM.FROH,file="./outputs/1.1.ID_bill_GRM_FROH_unscaled.RDS") ##
+saveRDS(mod_bill_GRM.Funi,file="./outputs/1_unscaled_traits/1.1.ID_bill_GRM_Funi_unscaled.RDS") ##
