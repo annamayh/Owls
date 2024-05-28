@@ -6,10 +6,11 @@ library(corpcor)
 ########################### ~~ bill ~~ #############################################
 #####################################################################################
 
-bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)%>% ##
-  mutate(age_acc=184*exp(-0.99*0.932^age_days)) %>%## account for age using gompertz growth
-  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
+args = commandArgs(trailingOnly = TRUE)
+scratch = as.character(args[1]) 
 
+bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T) ##
+  
 bill_df$clutch_merge=as.factor(bill_df$clutch_merge)
 bill_df$sex=as.factor(bill_df$sex)
 bill_df$RingId=as.factor(bill_df$RingId)
@@ -32,12 +33,11 @@ prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ##
              prior(student_t(3,0,20), class = "sd"),
              prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
 
-
 mod_bill_GRM.split_stage_h2 <- brm(
                       
-                      bf(BillLength ~  1 +sex+age_acc+rank+ # F removed as a fixed effect 
+                      bf(BillLength ~  1 +sex+age_acc+ # F removed as a fixed effect 
                            (0 + gr_stage||gr(RingId, cov=Amat)) + (0 + gr_stage||RingId_pe) + (0 + gr_stage||Observer) + (0 + gr_stage||clutch_merge) +
-                           (0 + gr_stage||year) + (0 + gr_stage||month) + (0 + gr_stage||nestboxID),
+                           (0 + gr_stage||year) + (0 + gr_stage||month) + (0 + gr_stage||nestboxID) + (0 + gr_stage||rank),
                          sigma ~ gr_stage-1), 
                       
                          data = bill_df,
@@ -53,4 +53,4 @@ mod_bill_GRM.split_stage_h2 <- brm(
 
 summary(mod_bill_GRM.split_stage_h2) ###
 
-saveRDS(mod_bill_GRM.split_stage_h2,file="./outputs/2_split_stages/2.1.Bill_split_stage_h2.RDS") ##
+saveRDS(mod_bill_GRM.split_stage_h2,file=paste0(scratch,"2.1.Bill_split_stage_h2_rank_rand.RDS")) ##
