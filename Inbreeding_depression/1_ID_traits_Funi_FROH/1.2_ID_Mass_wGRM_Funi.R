@@ -18,8 +18,6 @@ mass_df$Observer=as.factor(mass_df$Observer)
 mass_df$nestboxID=as.factor(mass_df$nestboxID)
 
 mass_df$rank=as.numeric(mass_df$rank)
-mass_df$CH1903X=as.numeric(mass_df$CH1903X) # locations of the nestboxes
-mass_df$CH1903Y=as.numeric(mass_df$CH1903Y)
 
 
 ## read in GRM
@@ -40,7 +38,7 @@ prior_mass=c(prior(student_t(3, 330, 60), class = "Intercept"), ##
 ## slight trouble converging when using default number of itts so increased and using priors
 mod_mass_GRM.Funi <- brm(Mass ~  1 + FuniWE+sex+rank+age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
-                           (1|year) + (1|month) + (1|nestboxID) + (1|rank),                         
+                           (1|year) + (1|month) + (1|nestboxID),                         
                          data = mass_df,
                          control=list(adapt_delta=0.9),
                          data2 = list(Amat = GRM),

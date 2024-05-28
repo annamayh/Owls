@@ -1,15 +1,15 @@
 ### ID in growth rate of wing ###
 
-library(tidyverse)
-library(brms)
-library(corpcor)
+library(brms,  lib = "/users/ahewett1/R")
+library(corpcor,  lib = "/users/ahewett1/R")
+library(readr,  lib = "/users/ahewett1/R")
 
 ##################################################################################
 ########################### ~~ wing ~~ #############################################
 #####################################################################################
 
-wing_df=read.table("./input_dfs/wing_all_pheno_df.txt",sep=",", header=T)%>% ##
-  mutate(wing_scale=LeftWing/100) ## scale wing to make model converage better
+wing_df=read.table("./input_dfs/wing_all_pheno_df.txt",sep=",", header=T)
+
 
 wing_df$clutch_merge=as.factor(wing_df$clutch_merge)
 wing_df$sex=as.factor(wing_df$sex)
@@ -23,9 +23,13 @@ wing_df$rank=as.numeric(wing_df$rank)
 
 
 prior_wing_gr<- c(
-  prior(normal(298, 10), nlpar = "asym",  class="b"),##
-  prior(normal(4, 0.5), nlpar = "b",  class="b"), ## 
-  prior(normal(0.95, 0.2), nlpar = "c",  class="b"), ## 
+  prior(normal(298, 90), nlpar = "asym",  class="b", coef="Intercept"),##
+  prior(normal(4, 2), nlpar = "b",  class="b", coef="Intercept"), ## 
+  prior(normal(0.95, 0.5), nlpar = "c",  class="b", coef="Intercept"), ## 
+  
+  prior(normal(0, 90), nlpar = "asym",  class="b"),## more stringent priors for indivduals effects
+  prior(normal(0, 5), nlpar = "b",  class="b"), ## 
+  prior(normal(0, 1), nlpar = "c",  class="b"), ## 
   
   prior(student_t(3, 0, 90), class = "sigma", lb=0),
   prior(student_t(3, 0, 90), class="sd",nlpar = "asym", lb=0), # 
@@ -34,7 +38,7 @@ prior_wing_gr<- c(
   
   
   prior(cauchy(0, 10), class="sd", group="RingId", nlpar = "asym", lb=0), #
-  prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "b", lb=0),
+  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
   
 )
@@ -52,22 +56,21 @@ growth_wing.mod=brm(
   family = gaussian(),
   chains = 4,
   prior = prior_wing_gr,
-  control = list(adapt_delta = 0.95),
+  control = list(adapt_delta = 0.98),
   init = 0, 
   cores = 4,
-  iter = 15000, 
+  iter = 35000, 
   warmup = 5000, 
-  thin=5
+  thin=10
   
 )
 
 
 summary(growth_wing.mod)
 
-plot(growth_wing.mod)
 
 
 ### save into outputs folder
-saveRDS(growth_wing.mod,file="./outputs/3_growth/3.3_wing_unscaled_gr_15k.RDS") ##
+saveRDS(growth_wing.mod,file="./outputs/3_growth/3.3_wing_unscaled_gr_35k.RDS") ##
 
 

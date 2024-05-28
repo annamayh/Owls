@@ -3,8 +3,11 @@ library(brms)
 library(corpcor)
 
 ##################################################################################
-########################### ~~ MASS ~~ #############################################
+########################### ~~ Mass ~~ #############################################
 #####################################################################################
+
+args = commandArgs(trailingOnly = TRUE)
+scratch = as.character(args[1]) 
 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)%>% ##
   mutate(age_acc=362*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
@@ -22,36 +25,35 @@ mass_df$rank=as.numeric(mass_df$rank)
 
 ## read in GRM
 grm=read_rds("./input_dfs/All3085_AUTOSAUMES_RP502SNPs.RDS")
-
 grm_filt=grm[rownames(grm)%in%mass_df[["RingId"]],colnames(grm)%in%mass_df[["RingId"]]]##filtering grm for ids only in df
 
 grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
-prior_mass=c(prior(student_t(3, 330, 60), class = "Intercept"), ## 
-             prior(student_t(3, 0, 60), class = "sd"),
-             prior(student_t(3, 0, 60), class = "sigma"),
-             prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
+prior_mass=c(prior(student_t(3, 330,60), class = "Intercept"), ## 
+             prior(student_t(3,0,60), class = "sd"),
+             prior(cauchy(0, 10), class = "sd", group="RingId_pe"))
 
 
-## slight trouble converging when using default number of itts so increased and using priors
-mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen+sex+rank+age_acc+
-                           (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
-                           (1|year) + (1|month) + (1|nestboxID),                         
+mod_mass_GRM.split_stage_h2 <- brm(
+                      
+                      bf(Mass ~  1 +sex+age_acc+rank+ # F removed as a fixed effect 
+                           (0 + gr_stage||gr(RingId, cov=Amat)) + (0 + gr_stage||RingId_pe) + (0 + gr_stage||Observer) + (0 + gr_stage||clutch_merge) +
+                           (0 + gr_stage||year) + (0 + gr_stage||month) + (0 + gr_stage||nestboxID),
+                         sigma ~ gr_stage-1), 
+                      
                          data = mass_df,
-                         control=list(adapt_delta=0.9),
+                         control=list(adapt_delta=0.95),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
-                         prior=prior_mass, ##
-                         iter = 50000,
-                         warmup = 10000,
+                         prior=prior_mass, #
+                         iter = 40000,
+                         warmup = 5000,
                          thin=5
 )
 
-summary(mod_mass_GRM.FROH) ###
+summary(mod_mass_GRM.split_stage_h2) ###
 
-saveRDS(mod_mass_GRM.FROH,file="./outputs/1.2.ID_mass_GRM_FROH_unscaled.RDS") ##
-
-
+saveRDS(mod_mass_GRM.split_stage_h2,file=paste0(scratch,"2.2.Mass_split_stage_h2.RDS")) ##

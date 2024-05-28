@@ -19,9 +19,6 @@ wing_df$Observer=as.factor(wing_df$Observer)
 wing_df$nestboxID=as.factor(wing_df$nestboxID)
 
 wing_df$rank=as.numeric(wing_df$rank)
-wing_df$CH1903X=as.numeric(wing_df$CH1903X) # locations of the nestboxes
-wing_df$CH1903Y=as.numeric(wing_df$CH1903Y) ## fitting this means the model takes ages to run - probably because its nested within nestboxID
-
 
 ## read in GRM
 grm=read_rds("./input_dfs/All3085_AUTOSAUMES_RP502SNPs.RDS")
@@ -41,7 +38,7 @@ prior_wing=c(prior(student_t(3, 200, 90), class = "Intercept"), ##
 ## slight trouble converging when using default number of itts so increased and using priors
 mod_wing_GRM.Froh <- brm(LeftWing ~  1 + FHBD512gen+sex+rank+age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
-                           (1|year) + (1|month) + (1|nestboxID) + (1|rank),
+                           (1|year) + (1|month) + (1|nestboxID),
                          data = wing_df,
                          control=list(adapt_delta=0.85),
                          data2 = list(Amat = GRM),

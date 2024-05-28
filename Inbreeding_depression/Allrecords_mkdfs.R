@@ -131,7 +131,10 @@ mass_df_all=all_pheno_df%>%
   na.omit(Mass,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   filter(Mass<1000) %>%#remove 1 incorrect mass record 
-  mutate(mass_scale=Mass/100)
+  mutate(mass_scale=Mass/100)%>%
+  mutate(age_acc=362*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
+  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
+
 
 n_distinct(mass_df_all$RingId) ##2300 ids with mass records, 11150 records
 
@@ -143,7 +146,10 @@ bill_df_all=all_pheno_df%>%
   select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
   na.omit(BillLength,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
-  mutate(bill_scale=BillLength/100) ## rescaling for ease of model convergence
+  mutate(bill_scale=BillLength/100) %>% ## rescaling for ease of model convergence
+  mutate(age_acc=184*exp(-0.99*0.932^age_days)) %>%## account for age using gompertz growth
+  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
+
 
 
 
@@ -158,7 +164,9 @@ wing_df_all=all_pheno_df%>%
   select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
   na.omit(LeftWing,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
-  mutate(wing_scale=LeftWing/100) ## rescaling for ease of model convergence
+  mutate(wing_scale=LeftWing/100) %>%## rescaling for ease of model convergence
+  mutate(age_acc=298*exp(-4.19*0.945^age_days)) %>% ## account for age unsing gompertz growth
+  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
 
 n_distinct(wing_df_all$RingId) ##2296 ids with records, 10747 records

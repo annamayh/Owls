@@ -1,11 +1,9 @@
 library(RZooRoH)
 library(tidyverse)
 
-args <- commandArgs(trailingOnly = TRUE)
 
-ss=args[1]
 
-load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_",ss,".RData"))
+load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_Super-Scaffold_2.RData"))
 
 
 snp_window_size=200
@@ -45,8 +43,8 @@ for (id in 1:number_ids){
 m_HBD_segs=do.call(rbind, ids_HBD_chr) ## 
 
 row.names(m_HBD_segs)=data_Rohs@sample_ids
-colnames(m_HBD_segs) <- c(paste0("pr_HBD_", ss , "_wind_", 1:seed))
+colnames(m_HBD_segs) <- c(paste0("pr_HBD_Super-Scaffold_2_wind_", 1:seed))
 
 
-saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_perID_",snp_window_size,"-snp-wind_",ss,".RDS"))
+saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_perID_",snp_window_size,"-snp-wind_Super-Scaffold_2.RDS"))
 

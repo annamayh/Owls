@@ -1,3 +1,6 @@
+
+library(sequoia)
+
 load("sequioa/pedigree_FULL_recontr_out26.2.RData")
 
 
@@ -44,7 +47,7 @@ consensus_ped=full_compare_parentage$ConsensusPed
 
 corrected_consensus_ped=consensus_ped%>%
   select(id, dam.c, sire.c)%>%
-  rename(RingId=id, mumID=dam.c, dadID=sire.c)
+  rename(RingId=id, MumId=dam.c, DadId=sire.c)
 
 mis=full_compare_parentage$Mismatch
 
@@ -116,3 +119,19 @@ ped_birth_yr=ped_corrected2%>%
 
 owl_hatch%>%
   filter(RingId=="M032156")
+
+
+
+
+
+write.table(corrected_consensus_ped,
+            file = "sequioa/coreccted_consensus_pedigree.txt",
+            row.names = F, quote = F, sep = ",",na = "NA") #saving tables as txt file 
+
+
+
+
+write.table(ped_birth_yr,
+            file = "sequioa/coreccted_pedigree_year.txt",
+            row.names = F, quote = F, sep = ",",na = "NA") #saving tables as txt file 
+

@@ -16,6 +16,8 @@ mc1r[mc1r=="II"]=0
 
 ## pedigree 
 
+ped_birth_yr=read.table("sequioa/coreccted_pedigree_year.txt", sep = ",", header=T)
+
 ped_birth_yr2=ped_birth_yr%>%
   unique()%>%
   mutate(year=as.numeric(year))%>%

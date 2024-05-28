@@ -7,7 +7,7 @@ library(corpcor)
 #####################################################################################
 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)%>% ##
-  mutate(age_acc=362*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
+  mutate(age_acc=3.62*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
 mass_df$clutch_merge=as.factor(mass_df$clutch_merge)
@@ -29,14 +29,14 @@ grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
-prior_mass=c(prior(student_t(3, 330, 60), class = "Intercept"), ## 
-             prior(student_t(3, 0, 60), class = "sd"),
-             prior(student_t(3, 0, 60), class = "sigma"),
-             prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
+prior_mass=c(prior(student_t(3, 3.3, 2.5), class = "Intercept"), ## 
+             prior(student_t(3, 0, 2.5), class = "sd"),
+             prior(student_t(3, 0, 2.5), class = "sigma"),
+             prior(cauchy(0, 1), class = "sd", group="RingId_pe"))
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen+sex+rank+age_acc+
+mod_mass_GRM.Funi <- brm(mass_scale ~  1 + FuniWE+sex+rank+age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),                         
                          data = mass_df,
@@ -50,8 +50,8 @@ mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen+sex+rank+age_acc+
                          thin=5
 )
 
-summary(mod_mass_GRM.FROH) ###
+summary(mod_mass_GRM.Funi) ###
 
-saveRDS(mod_mass_GRM.FROH,file="./outputs/1.2.ID_mass_GRM_FROH_unscaled.RDS") ##
+saveRDS(mod_mass_GRM.Funi,file="./outputs/1.2.ID_mass_GRM_Funi_Scaled.RDS") ##
 
 
