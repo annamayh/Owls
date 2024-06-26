@@ -1,0 +1,235 @@
+---
+title: "ids_for_seq"
+output: html_document
+date: "2024-05-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/ahewett1/Documents')
+library(tidyverse)
+```
+
+For individuals that died between hatching and fleding there are three sources in the database:
+- ids with a ringid and a known death date (easy)
+- ids with a ringid and no known death date (medium)
+(These ids that have 'gone missing' so its not confirmed that they have survived but its unlikely they have survived if they go missing before the fledging date) 
+- ids with no ringid and no known death date (difficult)
+
+```{r}
+clutch=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Clutch.csv")%>%
+  select(Id, Season, Nestbox, MaleRing, FemaleRing, CrossFostered)
+
+bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv")%>%
+  select(-RingType, -Species, -RingAdministrator,-CH1903X,-CH1903Y,
+         -CH1903Altitude,-RingedBy,-GeneticSex,-PhenotypeSex,-RFRingId,
+         -RFRingNumber,-RFRingDate,-RFRingDateErrorMargin,-Remarks
+)
+
+
+mes=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv")#%>%
+    #select(RingId, HatchDate, BornClutchId, HatchClutchId, RaisedClutchId, RingDate, SiteId)
+
+
+sequenced_ids=read.table("sequioa/3.inputfile_for_sequoia.raw", header=T)%>%
+  select(IID)%>%
+  rename(RingId=IID)%>%
+  add_column(seq_round_1="yes")
+
+
+lab=read.csv("Barn_owl_general/Data_base_dfs/Lab_20240523105823_LabIndividualTissue.csv")%>%
+  select(IndividualIdentifier,OtherIdentifiers, SampleType,LabIndividualTissueId,TissueIdentifier,LabIndividualId)%>%
+  rename(RingId=IndividualIdentifier)
+
+lab_indiv=read.csv("Barn_owl_general/Data_base_dfs/Lab_20240523105823_LabIndividual.csv")%>%
+    select(LabIndividualId,IndividualIdentifier,OtherIdentifiers)
+
+
+```
+
+## Ids with known death date ##
+
+```{r}
+
+age_dead_exact=bird%>%
+  filter(!is.na(HatchDate) & !is.na(DeathDate) & DeathDate != "") %>%
+  mutate(
+    hatch_date = as.Date(HatchDate, format = "%d/%m/%Y"),
+    death_date = as.Date(DeathDate, format = "%d/%m/%Y"),
+    age_at_death = death_date - hatch_date)
+
+
+age_dead_exact$age_at_death <- as.Date(as.character(age_dead_exact$death_date))-
+  as.Date(as.character(age_dead_exact$hatch_date)) ## 
+
+head(age_dead_exact)
+
+```
+748 ids with exact known death dates in the clutch that died before 90 days
+```{r}
+died_b4_90=age_dead_exact%>%
+    filter(age_at_death<=90)
+
+```
+255 of these have no RingId (so died before they were big enough to be ringed)
+493 have Ringid
+```{r}
+length(which(died_b4_90$RingId==""))
+length(which(died_b4_90$RingId!=""))
+
+```
+
+How many have we already sequenced??:
+(only ringed ids)
+17 / 748
+```{r}
+samples_seqed=died_b4_90%>%
+  left_join(sequenced_ids)%>%
+  filter(seq_round_1=="yes")
+head(samples_seqed)
+
+```
+
+Of ids that have been ringed:
+239 ids with good quality DNA samples (blood / blood cell)
+
+```{r}
+to_seq=died_b4_90%>%
+  filter(RingId!="")%>%
+  left_join(lab)%>%
+  filter(!(SampleType%in%c("swab","Swab", "Feather", "",NA)))
+
+n_distinct(to_seq$RingId)
+```
+Also 44 ids with a 'space' in lab info so idk what that means??
+```{r}
+to_seq_space=died_b4_90%>%
+  left_join(lab)%>%
+  filter((SampleType%in%c("")))
+
+n_distinct(to_seq_space$RingId)
+
+```
+
+
+Ids with known death dates and no ring id (n=255)
+
+```{r}
+
+no_ring_dd=died_b4_90%>%
+  filter(RingId == "", 
+        hatch_date > as.Date("2010-01-01")) # filtering for recent years (removes ~ 50 ids)
+
+
+head(no_ring_dd)
+
+```
+
+quickly check others in clutch
+(reminder to check full clutch as sometimes only one id per clutch have been sequenced)
+```{r}
+# sequenced_ids%>%
+#   filter(RingId=='M026282')
+
+seqd_clutches=bird%>%
+  right_join(sequenced_ids, by = 'RingId')%>%
+  distinct(BornClutchId)%>%
+  na.omit()%>%
+  add_column(others_in_clutch_seq='yes')
+
+complete_fam=no_ring_dd%>%
+  inner_join(seqd_clutches, by = 'BornClutchId')
+
+complete_fam_clutch_ids=complete_fam%>%
+  distinct(BornClutchId)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+Ids with a ringID but no known death date
+
+```{r}
+full_clutch=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Clutch.csv")%>%
+    select(Id, Season, Nestbox, MaleRing, FemaleRing, CrossFostered, UnhatchedEggs, InfertileEggs,     DeadEmbryos,BornEggs,BornAliveEggs,BornDeadEggs,Fledglings)
+```
+
+```{r}
+
+ids_w_ids <- bird %>%
+  select(RingId, BornClutchId) %>%
+  filter(RingId != "") %>%
+  group_by(BornClutchId) %>%
+  summarise(num_w_ids_in_clutch = n(), .groups = 'drop')
+
+num_fledlings <- full_clutch %>%
+  filter(Season >2010) %>% ## 
+  filter(CrossFostered != 1) %>% ## only for ids that were'nt cross fostered (otherwise )
+  rename(BornClutchId = Id) %>%
+  group_by(BornClutchId) %>%
+  filter(Fledglings < BornAliveEggs) %>%
+  right_join(bird, by = "BornClutchId") %>%
+  select(RingId, BornClutchId, Fledglings, BornAliveEggs, BornEggs,HatchDate, DeathDate) %>%
+  left_join(ids_w_ids, by = "BornClutchId") %>%
+  filter(num_w_ids_in_clutch > Fledglings, !is.na(num_w_ids_in_clutch))
+
+head(num_fledlings)
+
+check_numbers=num_fledlings%>%
+  select(BornClutchId, Fledglings, num_w_ids_in_clutch)%>%
+  distinct(BornClutchId, .keep_all = T)%>%
+  mutate(potential_number_new_ids=num_w_ids_in_clutch-Fledglings)
+
+sum(check_numbers$potential_number_new_ids)
+
+```
+
+```{r}
+num_fledlings[1:4,1:8]
+```
+
+```{r}
+full_clutch%>%
+  select(Id, Fledglings, BornAliveEggs, BornEggs)%>%
+  arrange(Id)%>%
+  filter(Id>0)
+```
+
+
+
+
+
+Ids that died in clutch but still may have lab stuff 
+
+
+Clutches where the number of born eggs doesnt equal the number of of born alive eggs 
+i.e. some eggs have died for one reason or another 
+```{r}
+eggs_unhatched=full_clutch%>%
+  rename(BornClutchId=Id)
+  
+```
+
+```{r}
+comb_bird=bird%>%
+  left_join(eggs_unhatched)%>%
+    filter(BornEggs!=BornAliveEggs)
+```
+## Birds with no Ringid (so died before they were big enough to be ringed) ##
+
+```{r}
+no_ring=bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv")%>%
+  filter(RingId=="")
+
+head(no_ring)
+
+```
+

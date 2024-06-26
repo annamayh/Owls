@@ -13,7 +13,7 @@ Mod@krates
 scaffold=data_Rohs@chrnames
 
 
-snp_window_size=200
+snp_window_size=2500
 ids_HBD_chr=list()
 number_ids=data_Rohs@nind
 

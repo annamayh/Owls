@@ -19,7 +19,7 @@ summary(h2_split)
 Var.table <- as_draws_df(h2_split)
 
 h.bill.juv <- as.mcmc((Var.table$sd_RingId__gr_stageJuvenile)^2 / ((Var.table$sd_RingId__gr_stageJuvenile)^2 + (Var.table$sd_RingId_pe__gr_stageJuvenile)^2+(Var.table$sd_month__gr_stageJuvenile)^2 + (Var.table$sd_year__gr_stageJuvenile)^2 + 
-                                                                     (Var.table$sd_rank__gr_stageJuvenile)^2 + (Var.table$sd_clutch_merge__gr_stageJuvenile)^2 + (Var.table$sd_nestboxID__gr_stageJuvenile)^2 + (Var.table$sd_nestboxID__gr_stageJuvenile)^2 + (Var.table$b_sigma_gr_stageJuvenile)^2))
+                                                                     (Var.table$sd_rank__gr_stageJuvenile)^2 + (Var.table$sd_clutch_merge__gr_stageJuvenile)^2 + (Var.table$sd_nestboxID__gr_stageJuvenile)^2 + (Var.table$b_sigma_gr_stageJuvenile)^2))
 summary(h.bill.juv)
 summary(h.bill.juv)$statistics[1] ## mean estimate for h2
 summary(h.bill.juv)$quantiles[1] ## upper CI
@@ -53,7 +53,7 @@ total.var.adult=as.mcmc((Var.table$sd_RingId__gr_stageAdult)^2 + (Var.table$sd_R
 
 rands=c("sd_RingId_" , "sd_RingId_pe_", "sd_year_", "sd_month_", "sd_nestboxID_" , "sd_clutch_merge_", "sd_rank_","b_sigma")
 
-get_variance_explained_by_rands=function(stage, total.var){
+get_variance_explained=function(stage, total.var){
     
   var_exp=NULL
   
@@ -92,10 +92,10 @@ get_variance_explained_by_rands=function(stage, total.var){
 
 
 
-juve.var=get_variance_explained_by_rands("Juvenile", total.var.juv)
+juve.var=get_variance_explained("Juvenile", total.var.juv)
 sum(juve.var$Mean)
 
-adult.var=get_variance_explained_by_rands("Adult", total.var.adult)
+adult.var=get_variance_explained("Adult", total.var.adult)
 sum(adult.var$Mean)
 
 

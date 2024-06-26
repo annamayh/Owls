@@ -1,14 +1,16 @@
-library(tidyverse)
-library(brms)
-library(corpcor)
+library(brms,  lib = "/users/ahewett1/R")
+library(corpcor,  lib = "/users/ahewett1/R")
+library(readr,  lib = "/users/ahewett1/R")
+
+
+args = commandArgs(trailingOnly = TRUE)
+scratch = as.character(args[1]) 
 
 ##################################################################################
 ########################### ~~ bill ~~ #############################################
 #####################################################################################
 
-bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)%>% ##
-  mutate(age_acc=184*exp(-0.99*0.932^age_days)) %>%## account for age using gompertz growth
-  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
+bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)
 
 bill_df$clutch_merge=as.factor(bill_df$clutch_merge)
 bill_df$sex=as.factor(bill_df$sex)
@@ -16,6 +18,7 @@ bill_df$RingId=as.factor(bill_df$RingId)
 bill_df$year=as.factor(bill_df$year)
 bill_df$Observer=as.factor(bill_df$Observer)
 bill_df$nestboxID=as.factor(bill_df$nestboxID)
+bill_df$gr_stage=as.factor(bill_df$gr_stage)
 
 bill_df$rank=as.numeric(bill_df$rank)
 #bill_df$CH1903X=as.numeric(bill_df$CH1903X) # locations of the nestboxes
@@ -36,7 +39,7 @@ prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ##
              prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
 
 
-mod_bill_GRM.FROH <- brm(BillLength ~  1 + (FHBD512gen*stage) +sex+age_acc+rank+
+mod_bill_GRM.FROH <- brm(BillLength ~  1 + (FHBD512gen*gr_stage) +sex+age_acc+rank+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),
                          data = bill_df,
@@ -45,11 +48,11 @@ mod_bill_GRM.FROH <- brm(BillLength ~  1 + (FHBD512gen*stage) +sex+age_acc+rank+
                          chains = 4,
                          cores=4,
                          prior=prior_bill, ##
-                         iter = 15000,
-                         warmup = 5000,
+                         iter = 50000,
+                         warmup = 10000,
                          thin=5
 )
 
 summary(mod_bill_GRM.FROH) ###
 
-saveRDS(mod_bill_GRM.FROH,file="./outputs/1_unscaled_traits/1.1.ID_bill_GRM_FROH_INTER.RDS") ##
+saveRDS(mod_bill_GRM.FROH,file=paste0(scratch,"1.1.ID_Stage_inter_bill_GRM_FROH.RDS")) ##

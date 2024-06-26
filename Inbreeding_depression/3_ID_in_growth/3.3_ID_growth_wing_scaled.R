@@ -26,21 +26,21 @@ wing_df$rank=as.numeric(wing_df$rank)
 
 
 prior_wing_gr<- c(
-  prior(normal(298, 20), nlpar = "asym",  class="b", coef="Intercept"),## priors for intercept expectations
-  prior(normal(4, 2), nlpar = "b",  class="b", coef="Intercept"), ## 
-  prior(normal(0.95, 0.2), nlpar = "c",  class="b", coef="Intercept"), ## 
+  prior(normal(3, 0.5), nlpar = "asym",  class="b", coef="Intercept"),##
+  prior(normal(4, 1), nlpar = "b",  class="b", coef="Intercept"), ## 
+  prior(normal(0.95, 0.5), nlpar = "c",  class="b", coef="Intercept"), ## 
   
-  prior(normal(0, 20), nlpar = "asym",  class="b"),## priors for fixed effects (deviaition from intercept)
-  prior(normal(0, 5), nlpar = "b",  class="b"), ## 
+  prior(normal(0, 0.5), nlpar = "asym",  class="b"),## more stringent priors for indivduals effects
+  prior(normal(0, 1), nlpar = "b",  class="b"), ## 
   prior(normal(0, 1), nlpar = "c",  class="b"), ## 
   
-  prior(student_t(3, 0, 20), class = "sigma", lb=0), ## priors for random effects 
-  prior(student_t(3, 0, 20), class="sd",nlpar = "asym", lb=0), # 
-  prior(student_t(3, 0, 20),  class="sd", nlpar = "b", lb=0),
-  prior(student_t(3, 0, 20),  class="sd", nlpar = "c", lb=0), 
+  prior(student_t(3, 0, 2), class = "sigma", lb=0),
+  prior(student_t(3, 0, 0.5), class="sd",nlpar = "asym", lb=0), # 
+  prior(student_t(3, 0, 1),  class="sd", nlpar = "b", lb=0),
+  prior(student_t(3, 0, 1),  class="sd", nlpar = "c", lb=0), 
   
   
-  prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym", lb=0), # priors for within id effect 
+  prior(cauchy(0, 0.5), class="sd", group="RingId", nlpar = "asym", lb=0), #
   prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
   
@@ -50,7 +50,7 @@ prior_wing_gr<- c(
 
 growth_wing.mod=brm(
   ## model 
-  bf(LeftWing ~ asym * exp(-b*(c)^age_days),
+  bf(wing_scale ~ asym * exp(-b*(c)^age_days),
      asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|RingId),
      c ~ 1 + FuniWE + rank + sex + (1|RingId), 
@@ -63,7 +63,7 @@ growth_wing.mod=brm(
   init = 0, 
   cores = 4,
   iter = 30000, 
-  warmup = 15000, 
+  warmup = 10000, 
   thin=10
   
 )
@@ -73,7 +73,7 @@ growth_wing.mod=brm(
 
 
 ### save into outputs folder
-saveRDS(growth_wing.mod,file=paste0(scratch,"3.3_wing_unscaled_gr_stronger_pr_30k.RDS")) ##
+saveRDS(growth_wing.mod,file=paste0(scratch,"3.3_wing_scaled_gr_30k_stringentpr.RDS")) ##
 
 #summary(growth_wing.mod)
 

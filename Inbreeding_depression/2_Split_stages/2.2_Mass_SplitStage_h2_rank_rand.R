@@ -52,6 +52,6 @@ mod_mass_GRM.split_stage_h2 <- brm(
                          thin=5
 )
 
-summary(mod_mass_GRM.split_stage_h2) ###
+#summary(mod_mass_GRM.split_stage_h2) ###
 
 saveRDS(mod_mass_GRM.split_stage_h2,file=paste0(scratch,"2.2.Mass_split_stage_h2_rank_rand.RDS")) ##
