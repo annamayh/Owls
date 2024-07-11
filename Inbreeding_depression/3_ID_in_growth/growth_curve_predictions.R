@@ -73,7 +73,7 @@ id_mass
 
 
 ##  wing
-ib_growth_wing=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.3_wing_unscaled_gr_25k.RDS")
+ib_growth_wing=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.3_wing_unscaled_gr_stronger_pr_30k.RDS")
 summary(ib_growth_wing)
 #plot(ib_growth_wing)
 
@@ -82,21 +82,18 @@ b_w=fixef(ib_growth_wing, pars = "b_Intercept")[,1]
 c_w=fixef(ib_growth_wing, pars = "c_Intercept")[,1]
 
 fasym_w=asym_w+(f*fixef(ib_growth_wing, pars = "asym_FuniWE")[,1])
-fb=b+(f*fixef(ib_growth_wing, pars = "b_FuniWE")[,1])
-fc=c+(f*fixef(ib_growth_wing, pars = "c_FuniWE")[,1])
+fb_w=b_w+(f*fixef(ib_growth_wing, pars = "b_FuniWE")[,1])
+#fc=c+(f*fixef(ib_growth_wing, pars = "c_FuniWE")[,1]) ## c not sig
 
-
-colinb="goldenrod1"
-colave="chocolate"
 
 id_wing=ggplot(ib_growth_wing$data, aes(x=age_days, y=LeftWing))+
   geom_point(alpha=0.1, colour="black", linewidth=2)+
   xlim (0,100)+
-  ylim(0,500)+
+  ylim(0,300)+
   theme_classic()+
-  labs(x="Age in days", y="Mass")+
-  stat_function(fun=~ asym_w*exp(-b*(c)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
-  stat_function(fun=~fasym_w*exp(-fb*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
+  labs(x="Age in days", y="Wing length")+
+  stat_function(fun=~ asym_w*exp(-b_w*(c_w)^.x), colour=colave, size=1.5, xlim=c(0,90), alpha=0.8)+ ##male (intercept)
+  stat_function(fun=~fasym_w*exp(-fb_w*(c_w)^.x), colour=colinb, size=1.5, xlim=c(0,90), alpha=0.8)
 ## inbred at F=0.15 
 
 id_wing
@@ -105,4 +102,4 @@ id_wing
 
 
 
-id_bill/id_mass+plot_annotation(tag_levels = 'A')
+id_bill/id_mass/id_wing+plot_annotation(tag_levels = 'A')

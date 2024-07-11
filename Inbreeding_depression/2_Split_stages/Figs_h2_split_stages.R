@@ -6,6 +6,7 @@ library(ggExtra)
 
 setwd("/Users/ahewett1/Documents")
 
+##function to extract h2 and proportion of variance explained by random effect in the model and make it in to a nice little table
 get_variance_explained_by_rands <- function(model){
   
   ## for both stages in model
@@ -82,7 +83,35 @@ get_variance_explained_by_rands <- function(model){
 
 
 
+### function just to get Va
+get_Va_only=function(model){
+    Var.table <- as_draws_df(model)
+    Va_only=NULL
+    stages <- c("Juvenile", "Adult")
+    
+    for (stage in stages){
+      Va_stage <- paste0("sd_RingId__gr_stage", stage)  # Getting variable names 
+    
+        Va=as.mcmc(Var.table[[Va_stage]])
+        summary_Va <- summary(Va)
+        mean<- summary_Va$statistics[1]  # Mean estimate for h2
+        Upr <- summary_Va$quantiles[5]    # Upper CI (97.5%)
+        Lwr <- summary_Va$quantiles[1]  ## Lower CI
+        
+        Va_df <- data.frame(
+          Mean = mean,
+          Lwr = Lwr,
+          Upr = Upr,
+          stage = stage)
+        
+        Va_only=rbind(Va_only,Va_df)
+      }
+    rownames(Va_only) <- NULL
+    return(Va_only) # return df
+}
 
+
+#############################################
 
 h2_split_bill=readRDS("Inbreeding_depression_owls/Model_outputs/2_split_stages/2.1.Bill_split_stage_h2_rank_rand.RDS")
 summary(h2_split_bill)
@@ -110,6 +139,23 @@ wing=get_variance_explained_by_rands(h2_split_wing)%>%
 split_stages_all=bill%>% ## df for plotting 
   rbind(wing)%>%
   rbind(mass)
+
+#### get Va for each trait ###
+va_bill=get_Va_only(h2_split_bill)%>%
+  add_column(trait="Bill Length")
+
+va_mass=get_Va_only(h2_split_mass)%>%
+  add_column(trait="Mass") ## 
+
+va_wing=get_Va_only(h2_split_wing)%>%
+  add_column(trait="Wing Length") ## 
+
+Va_split_stages_all=va_bill%>% ## df for plotting 
+  rbind(va_wing)%>%
+  rbind(va_mass)
+
+Va_split_stages_all[,1]
+
 #####################################################################################################
 ####################################### PLOTS #######################################
 ####################################### ####################################### ######################
@@ -136,7 +182,7 @@ var
 
 
 
-h22=split_stages_all%>%
+h2=split_stages_all%>%
   filter(effect=="Va")%>%
   ggplot(aes(group=trait, y=Mean, x=factor(stage, level = c('Juvenile', 'Adult')), ymin=Lwr, ymax=Upr, colour=trait))+
   scale_x_discrete(limits=c("Juvenile", "Adult"))+
@@ -153,14 +199,35 @@ h22=split_stages_all%>%
   labs(colour="Trait")
   
 
-h22 
+h2
 
 
-fig_split=var/h22 + plot_annotation(tag_levels = 'A') +plot_layout(heights = c(5,4))
+Va=Va_split_stages_all%>%
+  ggplot(aes(group=trait, y=Mean, x=factor(stage, level = c('Juvenile', 'Adult')), ymin=Lwr, ymax=Upr, colour=trait))+
+  scale_x_discrete(limits=c("Juvenile", "Adult"))+
+  geom_line(size=1,  position=position_dodge(0.2)) +
+  geom_point(size=4, position=position_dodge(0.2))+
+  geom_errorbar(size=1,width=0.25, position=position_dodge(0.2))+
+  theme_bw()+
+  #ylim(0,1)+
+  labs(y="Va")+
+  theme(text = element_text(size = 15), 
+        axis.title.x = element_blank(),
+        legend.text = element_text(size = 15))+
+  scale_color_brewer(palette = "Dark2")+
+  labs(colour="Trait")
+
+
+Va 
+
+va_and_h2=Va + h2 +plot_layout(guides = "collect")
+va_and_h2
+
+fig_split=var/va_and_h2 + plot_annotation(tag_levels = 'A') +plot_layout(heights = c(5,4))
 
 fig_split
 
 ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/All_split_stages.png",
        plot=fig_split, 
-       width = 8, 
+       width = 9, 
        height = 8)

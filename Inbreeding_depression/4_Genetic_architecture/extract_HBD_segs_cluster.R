@@ -7,7 +7,7 @@ ss=args[1]
 load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_",ss,".RData"))
 
 
-snp_window_size=2500
+snp_window_size=7500
 ids_HBD_chr=list()
 number_ids=data_Rohs@nind
 
