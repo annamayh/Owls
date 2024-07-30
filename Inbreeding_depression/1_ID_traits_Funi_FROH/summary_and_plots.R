@@ -19,6 +19,8 @@ id_mass_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGR
 id_wing_funi=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.3.ID_wing_GRM_Funi_unscaled.RDS")
 id_wing_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.3.ID_wing_GRM_FROH_unscaled.RDS")
 
+bill_data=read.table("Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",sep=",", header=T)
+
 ## check convergence and initial estimates
 summary(id_bill_funi) ## 
 summary(id_bill_froh)
@@ -29,8 +31,8 @@ summary(id_mass_froh)
 summary(id_wing_funi)
 summary(id_wing_froh)
 
-plot(id_bill_funi) ## 
-plot(id_bill_funi)
+#plot(id_bill_funi) ## 
+#plot(id_bill_funi)
 
 
 ## function to get model estimates of F and create a df with info of trait and F used 

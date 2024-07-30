@@ -82,5 +82,7 @@ owl.mc1r <- genedrop_snp(owl_col_gens$RingId,
 owl.mc1r.summ <- summary_genedrop(owl.mc1r)
 plot_genedrop_results(owl.mc1r.summ)
 
+plot_genedrop_lm_slopes(owl.mc1r.summ)
+
 
 plot_genedrop_cumulative_change(owl.mc1r.summ)

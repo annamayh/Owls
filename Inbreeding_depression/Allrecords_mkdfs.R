@@ -14,7 +14,7 @@ inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header 
 #table(owl_mes$EstimatedGrowthStage)
 
 ## reading in phenotype info
-owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)%>%
+owl_mes=read.csv("Barn_owl_general/Data_base_dfs//BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)%>%
   select(RingId,LeftTarsus, Mass, LeftWing, BillLength, Observer,ObservationDate,EstimatedGrowthStage)%>% ##only selecting the paramters we need
   separate_wider_delim(ObservationDate, delim = " ", names = c("obs_date",NA))%>%
   mutate(obs_date=as.Date(obs_date, format = "%d/%m/%Y"))%>%
@@ -29,7 +29,7 @@ owl_mes=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legac
 
 
 owl_sex_g=read.table("Inbreeding_depression_owls/GeneticSex_3K_RP548.txt", header = T) # sex info 
-owl_sex_p=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
+owl_sex_p=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
   select(RingId, PhenotypeSex)
 
 owl_sex_p$phen_sex=if_else(owl_sex_p$PhenotypeSex=="Male", 1, 
@@ -50,12 +50,12 @@ sex=owl_sex_g%>%
   select(RingId, sex)
 
 
-owl_site=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Site.csv", header = T)%>%
+owl_site=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Site.csv", header = T)%>%
   select(SiteId, CH1903X, CH1903Y)%>%
   mutate(SiteId=as.character(SiteId))
 
 ## info on clutch 
-owl_bird=read.csv("Barn_owl_general/BarnOwls_Legacy_20231010153920/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
+owl_bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
   select(RingId, BornClutchId, RaisedClutchId, SiteId, Nestbox, HatchDate)%>%
   na.omit()%>%
   separate_wider_delim(HatchDate, delim = " ", names = c("hatch_date",NA))%>%
@@ -104,30 +104,23 @@ all_pheno_df=fledge_mes_rep%>%
     age_days<=180 ~ "Juvenile", 
     age_days>180 ~ "Adult"
   ))%>%
-  filter(min_mes>0)
+  mutate(dev_stage=case_when(
+    age_days<=10 ~ "Day_0-10", 
+    age_days>10&age_days<=20 ~ "Day_10-20",
+    age_days>20&age_days<=40 ~ "Day_20-40", 
+    age_days>40&age_days<=60  ~ "Day_40-60",
+    age_days>60 ~ "Day_60plus")
+  )%>%
+  filter(min_mes>0)# filter 
 
 
 
 
 n_distinct(all_pheno_df$RingId) ## 2300 diff ids and total of 17073 obs but some have missing info for pheno traits
 
-## ~~ Tarsus df ~~ ###
-tarsus_df_all=all_pheno_df%>%
-  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month)%>% ##keep only pheno info interested in
-  na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
-  unique()%>% ## duplicates from repeated tracking ids on \
-  mutate(tarsus_scale=LeftTarsus/100)
-
-table(tarsus_df_all$gr_stage)
-
-n_distinct(tarsus_df_all$RingId) ##
-## adding extra info from other life stages doesnt increase the number of ids but does inc the number of records by ~ 500 for each  
-## most of the ids are ones we have info from clutch etc. 
-
-
 ## ~~ Mass df ~~ ####
 mass_df_all=all_pheno_df%>%
-  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month)%>% ##remove phenotype info we may not have 
+  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
   na.omit(Mass,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   filter(Mass<1000) %>%#remove 1 incorrect mass record 
@@ -143,7 +136,7 @@ table(mass_df_all$gr_stage)
 
 ## ~~ Bill length  ~~ ####
 bill_df_all=all_pheno_df%>%
-  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
+  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
   na.omit(BillLength,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(bill_scale=BillLength/100) %>% ## rescaling for ease of model convergence
@@ -161,7 +154,7 @@ table(bill_df_all$gr_stage)
 # ~~ wing length ~~  ####
 ## more records for wing length than tarsus so maybe good to look at both??
 wing_df_all=all_pheno_df%>%
-  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month)%>% ##remove phenotype info we may not have 
+  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage,min_mes)%>% ##remove phenotype info we may not have 
   na.omit(LeftWing,FuniWE) %>%#remove NAs
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(wing_scale=LeftWing/100) %>%## rescaling for ease of model convergence
@@ -174,6 +167,23 @@ n_distinct(wing_df_all$RingId) ##2296 ids with records, 10747 records
 table(wing_df_all$gr_stage)
 
 
+## ~~ Tarsus length ~~ ###
+tarsus_df_all=all_pheno_df%>%
+  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
+  na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
+  unique()%>% ## duplicates from repeated tracking ids on \
+  mutate(tarsus_scale=LeftTarsus/100)%>%
+  mutate(age_acc= 55 + (662*exp(-2.341*0.89^age_days))) %>% ## account for age unsing gompertz growth
+  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
+
+
+
+## save all dfs
+
+write.table(tarsus_df_all,
+            file = "Inbreeding_depression_owls/pheno_df/tarsus_all_pheno_df.txt",
+            row.names = F, quote = F, sep = ",",na = "NA")
+
 write.table(bill_df_all,
             file = "Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
@@ -182,13 +192,20 @@ write.table(mass_df_all,
             file = "Inbreeding_depression_owls/pheno_df/mass_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
 
-write.table(tarsus_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/tarsus_all_pheno_df.txt",
-            row.names = F, quote = F, sep = ",",na = "NA")
 
 write.table(wing_df_all,
             file = "Inbreeding_depression_owls/pheno_df/wing_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
+
+
+
+
+
+table(tarsus_df_all$gr_stage)
+
+n_distinct(tarsus_df_all$RingId) ##
+## adding extra info from other life stages doesnt increase the number of ids but does inc the number of records by ~ 500 for each  
+## most of the ids are ones we have info from clutch etc. 
 
 
 ####3

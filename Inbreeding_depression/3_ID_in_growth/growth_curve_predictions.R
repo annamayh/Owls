@@ -18,20 +18,20 @@ asym=fixef(ib_growth_bill, pars = "asym_Intercept")[,1]
 b=fixef(ib_growth_bill, pars = "b_Intercept")[,1]
 c=fixef(ib_growth_bill, pars = "c_Intercept")[,1]
 
-fasym=asym+(f*fixef(ib_growth_bill, pars = "asym_FuniWE")[,1])
+## for bill only b and c are sig 
 fb=b+(f*fixef(ib_growth_bill, pars = "b_FuniWE")[,1])
 fc=c+(f*fixef(ib_growth_bill, pars = "c_FuniWE")[,1])
 
 
-id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=BillLength))+
+id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
   geom_point(alpha=0.1, colour="black", size=2)+
   xlim (0,80)+
   #ylim(25,200)+
   theme_classic()+
-  labs(x="Age in days", y="Bill Length")+
-  stat_function(fun=~ asym*exp(-b*(c)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
+  labs(x="Age in days", y="Bill Length (mm)")+
+  stat_function(fun=~ (asym*0.1)*exp(-b*(c)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
   
-  stat_function(fun=~fasym*exp(-fb*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
+  stat_function(fun=~(asym*0.1)*exp(-fb*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
 ## inbred at F=0.15 
 
 id_bill
@@ -48,8 +48,8 @@ b_m=fixef(ib_growth_mass, pars = "b_Intercept")[,1]
 c_m=fixef(ib_growth_mass, pars = "c_Intercept")[,1]
 
 fasym_m=asym_m+(f*fixef(ib_growth_mass, pars = "asym_FuniWE")[,1])
-fb_m=b_m+(f*fixef(ib_growth_mass, pars = "b_FuniWE")[,1])
-fc_m=c_m+(f*fixef(ib_growth_mass, pars = "c_FuniWE")[,1])
+#fb_m=b_m+(f*fixef(ib_growth_mass, pars = "b_FuniWE")[,1])
+#fc_m=c_m+(f*fixef(ib_growth_mass, pars = "c_FuniWE")[,1])
 
 
 
@@ -58,10 +58,10 @@ id_mass=ggplot(ib_growth_mass$data, aes(x=age_days, y=Mass))+
   xlim (0,80)+
   ylim(0,600)+
   theme_classic()+
-  labs(x="Age in days", y="Mass")+
+  labs(x="Age in days", y="Mass (g)")+
   stat_function(fun=~ asym_m*exp(-b_m*(c_m)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
   
-  stat_function(fun=~fasym_m*exp(-fb_m*(fc_m)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
+  stat_function(fun=~fasym_m*exp(-b_m*(c_m)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
 
 id_mass
 
@@ -88,12 +88,12 @@ fb_w=b_w+(f*fixef(ib_growth_wing, pars = "b_FuniWE")[,1])
 
 id_wing=ggplot(ib_growth_wing$data, aes(x=age_days, y=LeftWing))+
   geom_point(alpha=0.1, colour="black", linewidth=2)+
-  xlim (0,100)+
-  ylim(0,300)+
+  xlim (0,35)+
+  ylim(0,100)+
   theme_classic()+
-  labs(x="Age in days", y="Wing length")+
-  stat_function(fun=~ asym_w*exp(-b_w*(c_w)^.x), colour=colave, size=1.5, xlim=c(0,90), alpha=0.8)+ ##male (intercept)
-  stat_function(fun=~fasym_w*exp(-fb_w*(c_w)^.x), colour=colinb, size=1.5, xlim=c(0,90), alpha=0.8)
+  labs(x="Age in days", y="Wing length (mm)")+
+  stat_function(fun=~ asym_w*exp(-b_w*(c_w)^.x), colour=colave, size=1.5, xlim=c(0,25), alpha=0.8)+ ##male (intercept)
+  stat_function(fun=~fasym_w*exp(-fb_w*(c_w)^.x), colour=colinb, size=1.5, xlim=c(0,25), alpha=0.8)
 ## inbred at F=0.15 
 
 id_wing
@@ -102,4 +102,12 @@ id_wing
 
 
 
-id_bill/id_mass/id_wing+plot_annotation(tag_levels = 'A')
+all_growth=id_mass/id_wing/id_bill+plot_annotation(tag_levels = 'A')
+all_growth
+
+
+
+ggsave(all_growth,
+       file = "Inbreeding_depression_owls/Model_outputs/3_growth/growth_pred_all.png",
+       width = 8,
+       height = 12)
