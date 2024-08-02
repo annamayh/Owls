@@ -32,14 +32,15 @@ prior_tarsus_gr<- c(
   prior(normal(0.9, 0.2), nlpar = "c",  class="b", coef="Intercept"), ## 
   
   prior(normal(0, 20), nlpar = "asym",  class="b"),## priors for fixed effects (deviaition from intercept)
-  prior(normal(0, 5), nlpar = "b",  class="b"), ## 
+  #prior(normal(0, 5), nlpar = "b",  class="b"), ## 
   prior(normal(0, 1), nlpar = "c",  class="b"), ## 
   
   prior(student_t(3, 0, 20), class = "sigma", lb=0), ## priors for random effects 
   prior(student_t(3, 0, 20), class="sd",nlpar = "asym", lb=0), # 
-  prior(student_t(3, 0, 5),  class="sd", nlpar = "b", lb=0),
+  #prior(student_t(3, 0, 5),  class="sd", nlpar = "b", lb=0),
   prior(student_t(3, 0, 1),  class="sd", nlpar = "c", lb=0), 
   
+  prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym1", lb=0),
   prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym", lb=0), # priors for within id effect 
   prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
@@ -50,9 +51,9 @@ prior_tarsus_gr<- c(
 growth_tarsus.mod=brm(
   ## model 
   bf(LeftTarsus ~ asym1 + (asym * exp(-b*(c)^age_days)),
-     asym1 ~ 1, ## assuming there is no effect at age 0 
+     asym1 ~ 1 + (1|RingId), ## assuming there is no effect at age 0 
      asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
-     b ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|RingId),
+     b ~ 1 + (1|RingId),
      c ~ 1 + FuniWE + rank + sex + (1|RingId), 
      nl=TRUE),
   data=tarsus_df, 
@@ -62,7 +63,7 @@ growth_tarsus.mod=brm(
   control = list(adapt_delta = 0.99),
   init = 0, 
   cores = 4,
-  iter = 30000, 
+  iter = 55000, 
   warmup = 15000, 
   thin=10
   

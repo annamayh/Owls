@@ -27,13 +27,13 @@ prior_mass_gr<- c(
   prior(normal(0.89, 0.5), nlpar = "c",  class="b", coef="Intercept"), ## 
   
   prior(normal(0, 60), nlpar = "asym",  class="b"),## more stringent priors for indivduals effects
-  prior(normal(0, 5), nlpar = "b",  class="b"), ## 
+ # prior(normal(0, 5), nlpar = "b",  class="b"), ## 
   prior(normal(0, 1), nlpar = "c",  class="b"), ## 
   
   
   prior(student_t(3, 0, 60), class = "sigma", lb=0),
   prior(normal(0, 60), class="sd",nlpar = "asym", lb=0), # 
-  prior(normal(0, 5),  class="sd", nlpar = "b", lb=0),
+ # prior(normal(0, 5),  class="sd", nlpar = "b", lb=0),
   prior(normal(0, 1),  class="sd", nlpar = "c", lb=0), 
   
   
@@ -49,7 +49,7 @@ growth_mass.mod=brm(
   ## model 
   bf(Mass ~ asym * exp(-b*(c)^age_days),
      asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
-     b ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|RingId),
+     b ~ 1 + (1|RingId),
      c ~ 1 + FuniWE + rank + sex + (1|RingId), 
      nl=TRUE),
   data=mass_df, 
@@ -66,10 +66,8 @@ growth_mass.mod=brm(
 )
 
 
-summary(growth_mass.mod)
-
-
 
 ### save into outputs folder
-saveRDS(growth_mass.mod,file="./outputs/3_growth/3.2_mass_unscaled_gr_45k.RDS") ##
+saveRDS(growth_mass.mod,file="./outputs/3_growth/3.2_mass_gr_fixedb.RDS") ##
 
+summary(growth_mass.mod)

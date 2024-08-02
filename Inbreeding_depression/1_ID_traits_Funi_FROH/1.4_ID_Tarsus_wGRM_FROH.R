@@ -30,7 +30,7 @@ grm_filt_pd <- make.positive.definite(grm_filt)
 GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
-prior_tarsus=c(
+prior_tarsus=c(prior(student_t(3, 650, 30), class = "Intercept"),
              prior(student_t(3, 0, 90), class = "sd"),
              prior(student_t(3, 0, 90), class = "sigma"),
              prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
@@ -41,13 +41,13 @@ mod_tarsus_GRM.Froh <- brm(LeftTarsus ~  1 + FHBD512gen+sex+rank+mc_age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),
                          data = tarsus_df,
-                         control=list(adapt_delta=0.9),
+                         control=list(adapt_delta=0.95),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
                          prior=prior_tarsus, 
-                         iter = 15000,
-                         warmup = 8000,
+                         iter = 25000,
+                         warmup = 10000,
                          thin=5
 )
 
