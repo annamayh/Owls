@@ -40,13 +40,13 @@ mod_tarsus_GRM.Funi <- brm(LeftTarsus ~  1 + FuniWE+sex+rank+mc_age_acc+
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),
                          data = tarsus_df,
-                         control=list(adapt_delta=0.95),
+                         control=list(adapt_delta=0.98),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
                          prior=prior_tarsus, 
-                         iter = 25000,
-                         warmup = 10000,
+                         iter = 35000,
+                         warmup = 15000,
                          thin=5
 )
 

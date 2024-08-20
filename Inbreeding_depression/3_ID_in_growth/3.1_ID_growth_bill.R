@@ -40,8 +40,8 @@ prior_bill_gr<- c(
 
   
   prior(cauchy(0, 10), class="sd", group="RingId", nlpar = "asym", lb=0), #
-  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
-  prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
+  prior(cauchy(0, 0.1),  class="sd", group="RingId", nlpar = "b", lb=0),
+  prior(cauchy(0, 0.1),  class="sd", group="RingId", nlpar = "c", lb=0)
   
 )
 
@@ -58,12 +58,12 @@ growth_bill.mod=brm(
   family = gaussian(),
   chains = 4,
   prior = prior_bill_gr,
-  control = list(adapt_delta = 0.99),
+  control = list(adapt_delta = 0.9),
   init = 0, 
   cores = 4,
-  iter = 55000, 
+  iter = 85000, 
   warmup = 15000, 
-  thin=10
+  thin=5
   
 )
 

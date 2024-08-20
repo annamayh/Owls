@@ -3,7 +3,7 @@ library(data.table)
 
 setwd("/Users/ahewett1/Documents")
 
-hbd_segs_list <- lapply(Sys.glob("Inbreeding_depression_owls/ROH_regions/HBD_segs_out/HBD_perID_2500-snp-wind_Super-Scaffold*.RDS"), readRDS)
+hbd_segs_list <- lapply(Sys.glob("Inbreeding_depression_owls/ROH_regions/HBD_segs_out/HBD_perID_7500-snp-wind_Super-Scaffold_*.RDS"), readRDS)
 
 hbd_segs_matrix <- map(hbd_segs_list, ~ as.data.frame(.x))%>% # convert to tibble 
   map(~ rownames_to_column(.x, var="RingId"))%>% # make column of ring id
@@ -14,8 +14,7 @@ hbd_segs_matrix <- map(hbd_segs_list, ~ as.data.frame(.x))%>% # convert to tibbl
 hbd_segs_matrix[1:5,1:4]
 
 
-bill_df_read=read.table("Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",sep=",", header=T)%>%
-  mutate(age_acc=184*exp(-0.99*0.932^age_days)) ## account for age using gompertz growth
+bill_df_read=read.table("Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",sep=",", header=T)
   
 ## linking HBD segs to phenotype df and creating a matrix 
 # froh_mat=hbd_segs_matrix%>%
@@ -53,7 +52,7 @@ scaffolds_to_keep <- paste0(scaffold_names, collapse = "|")
 
 ## linking HBD segs to phenotype df and creating a matrix 
 hbd_segs_matrix_rm=hbd_segs_matrix%>%
-  select(RingId, matches(scaffolds_to_keep)) ## removes about 300 windows 
+  select(RingId, matches(scaffolds_to_keep)) ## removes about windows in bad scaffolds 
 
 
 froh_mat=hbd_segs_matrix_rm%>%
@@ -82,4 +81,4 @@ bill_df$froh_mat_linked=froh_mat
 
 any(is.na(froh_mat))
 
-save(bill_df, file="Inbreeding_depression_owls/ROH_regions/df_with_HBD_mat/linked_bill_df_OnlyGoodSS.RData")
+save(bill_df, file="Inbreeding_depression_owls/ROH_regions/df_with_HBD_mat/linked_bill_df_OnlyGoodSS.RDS")

@@ -1,0 +1,825 @@
+---
+title: "Proposed individuals for sequencing"
+output:
+  html_document:
+    code_folding: hide
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/Users/ahewett1/Documents')
+library(tidyverse)
+```
+
+This is a list of possible individuals for the next round of sequencing and their respective numbers. Each have their own costs and benefits which I will go into in some of the sections. I would appreciate feedback on which sets of individuals you think would be worth sequencing. I have included the R code I used to identify these individuals, so feel free to take a look if you are interested, just click the 'show' button (I'm always happy to have feedback on my code!)
+
+### Groups of individuals: ###
+(Including number of individuals, n, and number of individuals with DNA already extracted, ext.)
+
+1. Confirmed dead ids that died within 90 days of hatching (n=224, ext = 220)
+2. Missing (almost certainly) dead ids (n=119, ext = 118)
+3. Un-ringed individuals with known death dates (n=73, ext = 55)
+4. Siblings of confirmed dead individuals in 1 (n=78, ext = 77)
+5. Siblings of ids that went missing in 2 (n=116, ext = 116)
+6. Siblings of previously sequenced ids that had high inbreeding coefficients (n=75, ext = 74)
+7. Parents of individuals sequenced last time (n=67, ext = 65)
+8. Parents of individuals proposed in 1 and 2 (n=25, ext = 25)
+9. Siblings and parents of individuals proposed in 3 (n=62, ext = 62)
+
+
+ .... All of which have good blood samples and are born after 2010 as this is when regular visits started so we can be more sure of their death dates. This will also reduce variation generated between years, but will mean we wont have temporal data if we want to look at allele freq change over time (sorry Tristan). 
+ *NOTE*:I couldnt find any information on location of blood samples post 2020 so currently this list does not include these years. But it might be good to have?
+ 
+
+
+- For inbreeding depression analysis depending on budgeting I would propose the priority individuals should be those from groups 1, 2 and 6 so a total of 418 unique individuals. 
+(Group 2 could always be split into cross fostered and non-cross fostered).
+- I'm worried that samples from individuals in 3 may be hard to find, but if theyre not then this would bump the total up to 491.
+
+
+- If there is the possibility we may also want to look at h2, parental effects or family inheritance etc. later then i would suggest also sequencing 4, 5, 7 and 8. Total of another 382 unique individuals (3 ids are in the previous suggestion)
+
+
+See below for details of individuals in each section and code and at the bottom a fig per year:
+
+
+```{r, echo=FALSE}
+clutch=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Clutch.csv")%>%
+  select(Id, Season, Nestbox, MaleRing, FemaleRing, CrossFostered)
+
+bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv")%>%
+  select(-RingType, -Species, -RingAdministrator,-CH1903X,-CH1903Y,
+         -CH1903Altitude,-RingedBy,-GeneticSex,-PhenotypeSex,-RFRingId,
+         -RFRingNumber,-RFRingDate,-RFRingDateErrorMargin,-Remarks
+)
+mes=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_BirdMeasurement.csv")#%>%
+   # select(RingId, HatchDate, BornClutchId, HatchClutchId, RaisedClutchId, RingDate, SiteId)
+
+sequenced_ids=read.table("sequioa/3.inputfile_for_sequoia.raw", header=T)%>%
+  select(IID)%>%
+  rename(RingId=IID)%>%
+  add_column(seq_round_1="yes")
+
+lab=read.csv("Barn_owl_general/Data_base_dfs/Lab_20240523105823_LabIndividualTissue.csv")%>%
+  select(IndividualIdentifier,OtherIdentifiers, SampleType,LabIndividualTissueId,
+         TissueIdentifier,LabIndividualId, BoxCode, BoxName, TubeIdentifier)%>%
+  rename(RingId=IndividualIdentifier)
+
+lab_indiv=read.csv("Barn_owl_general/Data_base_dfs/Lab_20240523105823_LabIndividual.csv")%>%
+    select(LabIndividualId,IndividualIdentifier,OtherIdentifiers)
+
+big_boy_lab=read.csv("Barn_owl_general/Data_base_dfs/Ta_Switzerland_Tissue_DNA _BIG_FILE_11.01.24.csv")
+```
+
+## ~ 1 ~ ##
+ 
+### Confirmed dead individuals (n=224) ###
+- Known death date so in most cases the body was found or sometimes just the ring
+- Known birth date (i.e. those born in the study area) 
+- Have a ring id 
+```{r}
+
+## getting individuals with known death and birth dates 
+age_dead_exact=bird%>%
+  filter(!is.na(HatchDate) & !is.na(DeathDate) & DeathDate != "") %>%
+  mutate(
+    hatch_date = as.Date(HatchDate, format = "%d/%m/%Y"), #mutating dates to correct formatting
+    death_date = as.Date(DeathDate, format = "%d/%m/%Y"),
+    age_at_death = death_date - hatch_date)
+
+dead_wRing_knownDd_blood=age_dead_exact%>%
+    filter(age_at_death<=90, #died before 90 days
+           RingId != "", # has ring id
+          hatch_date > as.Date("2010-01-01"))%>% # hatched after / in 2010
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids sequenced last time
+  left_join(lab,  by = "RingId")%>% #joing with lab info
+  filter(SampleType%in%c("blood","Blood cell"))%>% #check which ones have blood samples
+  distinct(RingId, .keep_all = TRUE) #
+
+```
+Number of ids with blood samples:
+```{r}
+n_distinct(dead_wRing_knownDd_blood$RingId)
+```
+
+Number of ids with DNA already extracted:
+
+```{r}
+DNA_extr_1=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(dead_wRing_knownDd_blood, by = 'RingId')%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+
+n_distinct(DNA_extr_1$RingId)
+```
+
+
+
+*Benefits*
+- Known dead so good for survival analysis
+
+
+## ~ 2 ~ ##
+
+### Individuals that went 'missing' before they were 45 days old (n = 119) ###
+- When the last time they were observed they were <35 days old and others in the clutch have recorded measurements after. (probably a very conservative approach but better safe than sorry)
+- These individuals do **not** have a recorded death date (for *reasons*) but they would be too young to have fledged so most likely died and the body fell far from the nest and was not recovered.
+- Only for ids with blood. 
+
+
+See code block below as an example of how I flagged these individuals. I then manually verified these ids on the database using the 'possibly dead' box in the database and the timeline when needed. 
+(see calc_missing.R for full run through in how these ids were identified)
+```{r, eval=FALSE, class.source = 'fold-show'}
+
+# Using the all the records from ID measurements and combining with info on clutch to group by the clutch the measurements were taken in 
+
+missings <- all_records_clutch %>%
+  filter(ObservationDate <= as.Date(paste(Season+1, 1, 1, sep = "-"))) %>% ## filter for only observations taken in the same season born
+  mutate(age_at_latest=as.integer(LatestBirdObservationDate - HatchDate))%>%
+  group_by(BornClutchId) %>%
+  ## Checking if there's any observations within the same clutch later than the last obs of the individual i.e. a clutch is visited again but there are no records of the id here
+  # conditional on whether the observation date is within 35 days of the latest bird obs (in case observations of others in clutch could have occured after id fledged)
+  mutate(obs_after = as.integer(
+    sapply(LatestBirdObservationDate, function(x) any((ObservationDate > x)& (ObservationDate <= x + 35)))
+  ))%>%
+    ## define missing ids if the last obs is before other obs taken in the clutch, the chick is within 45 days old and the age of the latest observation was <=35 days 
+  # so couldnt possibly have fledged but records stop for that id (i.e. likely because it is dead)
+  mutate(missing = case_when(
+    obs_after==1 & (LatestBirdObservationDate<HatchDate+45) & (age_at_latest<=35) ~1
+  ))%>%
+  ungroup()%>%
+  filter(missing==1)
+```
+Missing ids:
+```{r}
+## missings_with_blood was expoted and checked manually with the database 
+# reading confirmed individuals back in.
+missings=read.csv("Barn_owl_general/missing_ids/Confirmed_missingIDs_with_blood_and_rings.csv")%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced (n=1)
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')
+  
+n_distinct(missings$RingId)
+
+```
+And missing cross fostered ids too:
+```{r}
+##checked manually with the database 
+# reading confirmed individuals back in.
+cfs_missings=read.csv("Barn_owl_general/missing_ids/Confirmed_cross_fost_missingIDs_with_blood.csv")%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced (n=1)
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')
+  
+n_distinct(cfs_missings$RingId)
+```
+Total missing ids:
+```{r}
+total_missings=rbind(cfs_missings,missings)%>%
+  unique()
+
+n_distinct(total_missings$RingId)
+```
+
+Number of these that have had DNA extracted already:
+```{r}
+DNA_extr_2=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(total_missings, by = 'RingId')%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_2$RingId)
+
+
+```
+
+*Benefits*
+- Can be pretty confident that these individuals are dead so will add to survival analysis 
+
+*Costs*
+- Cross fostered individuals might make it harder to be sure death is due to genetics vs being cross fostered
+
+## ~ 3 ~ ##
+
+### All individuals born after 2010 with no RingId (n = 73) ###
+- Ids that died before they were old enough to be ringed
+- At the moment I have only used those with a confirmed death date 
+
+.... But the problem is, how many of them have blood samples and where are they 
+
+
+**NOTE: We could get 139 more samples if we also assume that since these ids dont have a recorded RingID they probably died. **
+
+
+(PLEASE CHECK: is there any way that these individuals could have been ringed at a later date but this was somehow not linked properly in the database? I dont believe so but just to be sure please check code)
+
+>e.g. first 10 ids:
+
+```{r}
+All_after2010_noRing=bird%>%
+    filter(as.Date(HatchDate, format = "%d/%m/%Y") > as.Date("2010-01-01"))%>% # hatched after / in 2010
+  filter(RingId=="")
+
+All_after2010_noRing[1:10, c(1:3,6,8,17,18)]
+```
+Can see that for a lot of them the first observation date was also the last observation. And also see these individuals have no RingId but they do have a mark starting with 'NB', which we will use to link to the lab info
+
+Total number of these unringed ids:
+```{r}
+n_distinct(All_after2010_noRing$BirdId)
+```
+And number with known death dates:
+```{r}
+clutch_born=clutch%>%
+    rename(BornClutchId=Id)
+# clutch_raised=clutch%>%
+#     rename(RaisedClutchId=Id)
+
+dead_noRing=All_after2010_noRing%>%
+  filter(!(DeathDate==""))%>%
+  left_join(clutch_born, by = 'BornClutchId')%>%
+  select(BirdId, Mark, BornClutchId, Season, Nestbox.y, CrossFostered, HatchDate, DeathDate)
+
+n_distinct(dead_noRing$BirdId)
+
+```
+
+Now to link the ids to lab info by first filtering all the lab samples that start with 'NB' and then only keeping those that have blood samples. 
+
+Brief example showing 2 ids, one that has 2 sample names (one with a ring id and one in the NB format), and another that has only samples names in the NB format:
+
+```{r}
+big_boy_lab[c(25056,27858),c(3:5, 14) ]
+```
+Total number of individual samples with a sample name that starts with NB **AND** that doesnt have another samples name starting with an 'M' (i.e. individuals that did eventually get a ring) **AND** that have blood info:
+```{r}
+## all lab info with samples that start with either M or NB 
+NBs=big_boy_lab%>%
+  filter(str_starts(Sample_Name_1, 'NB')| str_starts(Sample_Name_2, 'NB'))%>%
+  filter(!str_starts(Sample_Name_2, 'M') &  !str_starts(Sample_Name_3, 'M') & !str_starts(Sample_Name_1,'M'))%>%
+  filter(Tissue.Type%in%c("blood","Blood"))#check which ones have blood samples
+
+n_distinct(NBs)
+```
+
+So combining these two datasets we can search for ids with no Ring ID that match the format specified in the sample names in the lab info and attempted to match these with either sample name 1 or sample name 2 
+Formats include:
+
+- NB, season, N, nestbox, mark
+- NB, nestbox, Mark
+
+
+```{r}
+# First sample same seq: NB, Season, N, nestbox, Mark
+# and match to sample name 2
+
+dead_noRing_knownDd_NB_S_N_nest_M=dead_noRing%>%
+  drop_na(BornClutchId)%>% #remove 2 ids with no clutch info
+  mutate(nestbox_edit=gsub("[A-Za-z]", "", Nestbox.y))%>%
+  mutate(Sample_Name_2 = paste0('NB', Season, 'N', nestbox_edit, Mark))
+
+sample_name2_match_NB_S_N_nest_M=dead_noRing_knownDd_NB_S_N_nest_M%>%
+  inner_join(NBs, by = 'Sample_Name_2', relationship = "many-to-many")
+
+#n_distinct(sample_name2_match_NB_S_N_nest_M$BirdId)
+
+# NB, nestbox, Mark
+# and match to sample name 1 & 2
+
+dead_noRing_knownDd_NB_nest_mark=dead_noRing%>%
+  drop_na(BornClutchId)%>% #remove 2 ids with no clutch info
+  mutate(nestbox_edit=gsub("[A-Za-z]", "", Nestbox.y))%>%
+  mutate(Sample_Name_2 = paste0('NB', nestbox_edit,Mark))
+
+sample_name2_match_NB_nest_mark=dead_noRing_knownDd_NB_nest_mark%>%
+  inner_join(NBs, by = 'Sample_Name_2',relationship = "many-to-many")
+
+#n_distinct(sample_name2_match_NB_nest_mark$BirdId)
+
+## sample name 1
+
+dead_noRing_knownDd_NB_nest_mark=dead_noRing%>%
+  drop_na(BornClutchId)%>% #remove 2 ids with no clutch info
+  mutate(nestbox_edit=gsub("[A-Za-z]", "", Nestbox.y))%>%
+  mutate(Sample_Name_1 = paste0('NB', nestbox_edit,Mark))
+
+sample_name1_match_NB_nest_mark=dead_noRing_knownDd_NB_nest_mark%>%
+  inner_join(NBs, by = 'Sample_Name_1',relationship = "many-to-many")
+
+#n_distinct(sample_name1_match_NB_nest_mark$BirdId)
+
+
+# N, nestbox, Mark
+# and match to sample name 1
+dead_noRing_knownDd_N_nest_M=dead_noRing%>%
+  filter(CrossFostered==0 | is.na(CrossFostered))%>%
+  drop_na(BornClutchId)%>% #remove 2 ids with no clutch info
+  mutate(nestbox_edit=gsub("[A-Za-z]", "", Nestbox.y))%>%
+  mutate(Sample_Name_1 = paste0('N', nestbox_edit, Mark))
+
+sample_name1_match_N_nest_M=dead_noRing_knownDd_N_nest_M%>%
+  inner_join(NBs, by = 'Sample_Name_1',relationship = "many-to-many")
+
+#n_distinct(sample_name1_match_N_nest_M$BirdId)
+```
+Total number of unringed Ids with blood
+```{r}
+all_unringed_linked_blood=rbind(sample_name2_match_NB_S_N_nest_M,sample_name1_match_NB_nest_mark)%>%
+  rbind(sample_name2_match_NB_nest_mark)%>%
+  rbind(sample_name1_match_N_nest_M)%>%
+  unique()
+
+n_distinct(all_unringed_linked_blood$BirdId)
+```
+
+Total of these with DNA already extracted:
+
+```{r}
+DNA_extr_3.1=all_unringed_linked_blood%>%
+  select(Sample_Name_1, Sample_Name_2,BirdId,Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  filter(Date.extraction!='')
+
+n_distinct(DNA_extr_3.1$BirdId)
+```
+
+
+*Benefits*
+- Gives an estimator of (very) early life survival 
+
+*Costs*
+- Might be difficult to find these individuals in the freezers given they dont have a ring id.
+- May also be hard to keep track of them without a ring id.
+
+
+
+## ~ 4 ~ ##
+
+### Siblings of the ids that died from 1 (n=78)###
+```{r, message=FALSE}
+# getting born clutch id of those in stage 1.1
+clutches_of_deads1=dead_wRing_knownDd_blood%>%
+  select(BornClutchId)%>% 
+  distinct(BornClutchId)%>%
+  na.omit()
+
+
+#n_distinct(clutches_of_deads1$BornClutchId)
+
+all_sibs=bird%>% # all records of all ids 
+  right_join(clutches_of_deads1)%>% # getting only ids born in the clutches of interest (645 ids) 
+  anti_join(sequenced_ids, by = "RingId")%>% # removing ids already sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId') %>%# removing ids from 1.1
+  anti_join(total_missings, by = 'RingId') # remove ids from stage 1.2
+
+
+ringed_sibs=
+  all_sibs%>%
+  left_join(lab)%>% # combing with lab info 
+  filter(SampleType%in%c("blood","Blood cell")) # filtering for sibs only with blood samples.
+```
+Total number with blood samples:
+```{r}
+n_distinct(ringed_sibs$RingId)
+```
+Number of these with DNA already extracted:
+```{r}
+DNA_extr_4=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(ringed_sibs, by = 'RingId',relationship =  "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_4$RingId)
+
+```
+*Benefits*
+- Completes the family and add power to analysis by being able to discern inbreeding (etc) vs clutch effects.
+*Costs*
+- Not directly interested in these individuals 
+
+
+## ~ 5 ~ ##
+
+### Siblings of the ids that went missing from 2 (n=116) ###
+```{r, message=FALSE}
+# getting born clutch id of those in stage 1.1
+clutches_of_missings=total_missings%>%
+  select(BornClutchId)%>% 
+  na.omit()%>%
+  distinct(BornClutchId)
+
+#n_distinct(clutches_of_deads1$BornClutchId)
+
+missing_all_sibs=bird%>% # all records of all ids 
+  right_join(clutches_of_missings)%>% # getting only ids born in the clutches of interest (645 ids) 
+  anti_join(sequenced_ids, by = "RingId")%>% # removing ids already sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId') %>%# removing ids from 1.1
+  anti_join(total_missings, by = 'RingId') # remove ids from stage 1.2
+
+
+missing_sibs=
+  missing_all_sibs%>%
+  left_join(lab,relationship = "many-to-many")%>% # combing with lab info 
+  filter(SampleType%in%c("blood","Blood cell")) # filtering for sibs only with blood samples.
+
+n_distinct(missing_sibs$RingId)
+
+```
+
+Number of these with DNA already extracted:
+```{r}
+DNA_extr_5=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(missing_sibs, by = 'RingId',relationship =  "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_5$RingId)
+
+```
+
+## ~ 6 ~ ## 
+
+### Siblings of previously sequenced individuals that have high inbreeding coefficients ###
+
+Under the assumption that the ids within a clutch will have simularly high inbreeding coefficients. 
+
+```{r, message=FALSE}
+##Read in inbreeding coefficients
+inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header = T)%>%
+  rename(RingId=INDVs)
+#top 90% inbred individuals from 1st round of sequencing
+top_ibcs=inb%>%
+  filter(FuniWE > quantile(FuniWE, 0.9))%>% # top % ibcs
+  left_join(bird)%>% ## joining with bird info to get DOB
+  filter(as.Date(HatchDate, format = "%d/%m/%Y") > as.Date("2010-01-01")) # hatched after / in 2010
+
+#n_distinct(top_ibcs$BornClutchId) ##  number of different clutches that have highest ibcs 
+
+#inbred clutches
+inbred_clutches=top_ibcs%>%
+  select(BornClutchId)%>%
+  distinct(BornClutchId)%>%
+  na.omit()
+# inbred sibling within those inbred clutches
+inbred_sibs=bird%>%
+  right_join(inbred_clutches)%>% #
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(total_missings, by = 'RingId')%>% # remove ids from stage 1.2
+  anti_join(ringed_sibs, by = 'RingId')%>% # remove ids from stage 1.4
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell")) #filter for only ids with blood samples 
+```
+Total number with blood samples:
+```{r}
+n_distinct(inbred_sibs$RingId) # number of samples 
+```
+
+Number of these with DNA already extracted:
+```{r}
+DNA_extr_6=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(inbred_sibs, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_6$RingId)
+
+```
+
+## ~ 7 ~ ##
+
+### Genetic parents of individuals already sequenced last round (n=67) ###
+- Born after 2010
+
+
+```{r, message=FALSE}
+seqd_clutch_parents=bird%>%
+  right_join(sequenced_ids)%>%
+  select(RingId, BornClutchId)%>%
+  rename(Id=BornClutchId)%>%
+  left_join(clutch)%>%
+  filter(Season>2010)%>%
+  select(FemaleRing, MaleRing)%>%
+  pivot_longer(cols=1:2, values_to = 'RingId')%>%
+  na.omit()%>%
+  filter(RingId!='')
+
+## check those that have already been done and those that have already been proposed 
+
+prop_clutch_parents=seqd_clutch_parents%>%
+  select(RingId)%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(total_missings, by = 'RingId')%>% # remove ids from stage 1.2
+  anti_join(ringed_sibs, by = 'RingId')%>%
+  anti_join(inbred_sibs, by = 'RingId')%>%
+  unique()%>%
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell"))
+```
+Total number with blood samples:
+```{r}
+n_distinct(prop_clutch_parents$RingId)
+
+```
+
+Number of these with DNA already extracted:
+```{r}
+DNA_extr_7=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(prop_clutch_parents, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_7$RingId)
+
+```
+
+## ~ 8 ~ ##
+
+### Genetic parents of individuals proposed in 1 (n=16) and 2 (n=9) ###
+- Born after 2010
+- Many were actually sequenced last time round
+
+### 8.1 ###
+```{r message=FALSE}
+
+p1_1_seqd_clutch_parents=dead_wRing_knownDd_blood%>%
+  select(RingId, BornClutchId)%>%
+  rename(Id=BornClutchId)%>%
+  left_join(clutch)%>%
+  filter(Season>2010)%>%
+  select(FemaleRing, MaleRing)%>%
+  pivot_longer(cols=1:2, values_to = 'RingId')%>%
+  na.omit()%>%
+  filter(RingId!='')
+
+## check those that have already been done and those that have already been proposed 
+
+p1_1_prop_clutch_parents=p1_1_seqd_clutch_parents%>%
+  select(RingId)%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(total_missings, by = 'RingId')%>% # remove ids from stage 1.2
+  anti_join(ringed_sibs, by = 'RingId')%>%
+  anti_join(inbred_sibs, by = 'RingId')%>%
+  unique()%>%
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell"))
+
+
+n_distinct(p1_1_prop_clutch_parents$RingId)
+```
+
+Number of these with DNA already extracted:
+```{r message=FALSE}
+DNA_extr_8.1=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(p1_1_prop_clutch_parents, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_8.1$RingId)
+
+```
+
+### 8.2 ### 
+
+```{r}
+p1_2_seqd_clutch_parents=total_missings%>%
+  select(RingId, BornClutchId)%>%
+  rename(Id=BornClutchId)%>%
+  left_join(clutch)%>%
+  filter(Season>2010)%>%
+  select(FemaleRing, MaleRing)%>%
+  pivot_longer(cols=1:2, values_to = 'RingId')%>%
+  na.omit()%>%
+  filter(RingId!='')
+
+## check those that have already been done and those that have already been proposed 
+
+p1_2_prop_clutch_parents=p1_2_seqd_clutch_parents%>%
+  select(RingId)%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(total_missings, by = 'RingId')%>% # remove ids from stage 1.2
+  anti_join(ringed_sibs, by = 'RingId')%>%
+  anti_join(inbred_sibs, by = 'RingId')%>%
+  unique()%>%
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell"))
+
+
+n_distinct(p1_2_prop_clutch_parents$RingId)
+
+```
+
+Number of these with DNA already extracted:
+```{r}
+DNA_extr_8.2=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(p1_2_prop_clutch_parents, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_8.2$RingId)
+
+```
+
+## ~ 9 ~ ##
+
+### Siblings of the ids from 3 (n=52) and their parents (n=10) ###
+(again a lot were sequenced last time and are also in other lists)
+
+Sibs:
+```{r, message=FALSE}
+clutches_of_norings=all_unringed_linked_blood%>%
+  select(BornClutchId)%>% 
+  na.omit()%>%
+  distinct(BornClutchId)
+
+#n_distinct(clutches_of_deads1$BornClutchId)
+
+norings_all_sibs=bird%>% # all records of all ids 
+  right_join(clutches_of_norings)%>% # getting only ids born in the clutches of interest (645 ids) 
+  anti_join(sequenced_ids, by = "RingId")%>% # removing ids already sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId') %>%# removing ids from 1.1
+  anti_join(total_missings, by = 'RingId') # remove ids from stage 1.2
+
+
+norings_sibs=
+  norings_all_sibs%>%
+  left_join(lab,relationship = "many-to-many")%>% # combing with lab info 
+  filter(SampleType%in%c("blood","Blood cell")) # filtering for sibs only with blood samples.
+
+n_distinct(norings_sibs$RingId)
+```
+Number of these with DNA already extracted:
+```{r message=FALSE}
+DNA_extr_9.1=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(norings_sibs, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_9.1$RingId)
+
+```
+Parents:
+```{r message=FALSE}
+########################################################################
+### parents #####
+p1_3_noring_clutch_parents=all_unringed_linked_blood%>%
+  select(BornClutchId)%>%
+  rename(Id=BornClutchId)%>%
+  left_join(clutch)%>%
+  filter(Season>2010)%>%
+  select(FemaleRing, MaleRing)%>%
+  pivot_longer(cols=1:2, values_to = 'RingId')%>%
+  na.omit()%>%
+  filter(RingId!='')
+
+## check those that have already been done and those that have already been proposed 
+
+p1_3_prop_clutch_parents=p1_3_noring_clutch_parents%>%
+  select(RingId)%>%
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(total_missings, by = 'RingId')%>% # remove ids from stage 1.2
+  anti_join(ringed_sibs, by = 'RingId')%>%
+  anti_join(inbred_sibs, by = 'RingId')%>%
+  unique()%>%
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell"))
+
+n_distinct(p1_3_prop_clutch_parents$RingId)
+
+```
+Number of these with DNA already extracted:
+```{r message=FALSE}
+DNA_extr_9.1=big_boy_lab%>%
+  select(Sample_Name_1, Date.extraction, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, DNA_Tube_Nb, DNA.C.ng.ul.)%>%
+  rename(RingId=Sample_Name_1)%>%
+  filter(RingId!='')%>%
+  inner_join(p1_3_prop_clutch_parents, by = 'RingId',relationship = "many-to-many")%>%
+  filter(Date.extraction!=''| is.na(Date.extraction))
+
+n_distinct(DNA_extr_9.1$RingId)
+
+```
+
+```{r message=FALSE}
+## just checking the total number of ids proposed ##
+missing=total_missings$RingId
+dead_ids=dead_wRing_knownDd_blood$RingId
+inbred_ids=inbred_sibs$RingId
+
+all_Ringids_plate_1=c(missing, dead_ids, inbred_ids)%>%
+  unique()%>%
+  as.data.frame()%>%
+  rename(RingId='.')%>%
+  mutate(proposed_seq_round_2 = 'yes')
+
+
+ringed_sibs_ids=ringed_sibs$RingId
+missing_sibs_ids=missing_sibs$RingId
+prop_clutch_parents_ids=prop_clutch_parents$RingId
+p1_2_prop_clutch_parents_ids=p1_2_prop_clutch_parents$RingId
+p1_1_prop_clutch_parents_ids=p1_1_prop_clutch_parents$RingId
+
+
+all_Ringids_plate_2=c(ringed_sibs_ids, missing_sibs_ids, prop_clutch_parents_ids, p1_2_prop_clutch_parents_ids,  p1_1_prop_clutch_parents_ids)%>%
+  unique()%>%
+  as.data.frame()%>%
+  rename(RingId='.')%>%
+  anti_join(all_Ringids_plate_1, by = 'RingId')%>%
+  mutate(proposed_seq_round_3 = 'yes')
+
+
+unringed_propsed=all_unringed_linked_blood%>%
+    select(BirdId, HatchDate)%>%
+    unique()%>%
+    as.data.frame()%>%
+    mutate(proposed_seq_round_2_unringed = 'yes')
+
+
+```
+
+
+## Distribution of proposed individuals, those already sequenced and those left over per year ##
+
+```{r  message=FALSE}
+all_ringed_ids_after2010=bird%>%
+  mutate(ring_date = as.Date(RingDate, format = "%d/%m/%Y"))%>%
+  separate_wider_delim(ring_date, delim = "-", cols_remove=F,names = c("year",NA,NA))%>%
+  select(RingId, year)%>%
+  unique()%>%
+  na.omit()%>%
+  filter(year>2009)%>%
+  left_join(sequenced_ids)%>%
+  left_join(all_Ringids_plate_1)%>%
+  left_join(all_Ringids_plate_2)
+
+per_yr=all_ringed_ids_after2010%>%
+  group_by(year)%>%
+  summarise(total_ringed=n(),
+            Sequenced=sum((seq_round_1 == 'yes'), na.rm = TRUE),
+            Newly_proposed=sum((proposed_seq_round_2 == 'yes'|proposed_seq_round_3 == 'yes'), na.rm = TRUE)            )%>%
+  mutate(Remainder_indivs=total_ringed-(Sequenced+Newly_proposed))
+
+  
+
+
+all_UNringed_ids_after2010=bird%>%
+  mutate(hatch_date = as.Date(HatchDate, format = "%d/%m/%Y"))%>%
+  separate_wider_delim(hatch_date, delim = "-", cols_remove=F,names = c("year",NA,NA))%>%
+  filter(RingId=='')%>%
+  select(BirdId, year)%>%
+  unique()%>%
+  na.omit()%>%
+  filter(year>2009)%>%
+  left_join(unringed_propsed, by='BirdId')
+
+per_yr_unringed=all_UNringed_ids_after2010%>%
+  group_by(year)%>%
+  summarise(total_UNringed=n(),
+          Newly_proposed_unringed=sum((proposed_seq_round_2_unringed == 'yes'), na.rm = TRUE))%>%
+  mutate(Remainder_unringed_indivs=total_UNringed-Newly_proposed_unringed)
+ 
+
+all_birds_after2010=
+  merge(per_yr, per_yr_unringed)
+
+
+plotting=all_birds_after2010%>%
+  pivot_longer(cols=c(Remainder_unringed_indivs, Newly_proposed_unringed, Sequenced, Remainder_indivs, Newly_proposed),values_to = 'number_ids')
+
+
+
+
+plotting%>%
+  ggplot(aes(x=year,y=number_ids,fill=name)) + 
+    geom_bar(position = "stack", stat="identity")+
+    theme_bw()+
+  scale_fill_brewer(palette = 'Set2', direction = -1)
+
+
+
+
+```
+
+I see now that some of the newly proposed unringed individuals are in the later years which i may remove ...

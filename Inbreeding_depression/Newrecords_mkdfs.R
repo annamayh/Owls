@@ -6,7 +6,6 @@ library(tidyverse)
 
 setwd("/Users/ahewett1/Documents")
 
-
 ##Fgrm and FROH from elo
 inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header = T)%>%
   rename(RingId=INDVs)
@@ -14,8 +13,8 @@ inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header 
 #table(owl_mes$EstimatedGrowthStage)
 
 ## reading in phenotype info
-owl_mes=read.csv("Barn_owl_general/Data_base_dfs//BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)%>%
-  select(RingId,LeftTarsus, Mass, LeftWing, BillLength, HookLength, Observer,ObservationDate,EstimatedGrowthStage)%>% ##only selecting the paramters we need
+owl_mes=read.csv("Barn_owl_general/Data_base_dfs//BarnOwls_Legacy_20231010153920_BirdMeasurement.csv",header = T)#%>%
+  select(RingId,ThirdRemigeLeft, UropygialGlandLength, UropygialGlandWidth, UropygialGlandWidth, CentralRectriceLeft,CentralRectriceRight, Observer,ObservationDate,EstimatedGrowthStage)%>% ##only selecting the paramters we need
   separate_wider_delim(ObservationDate, delim = " ", names = c("obs_date",NA))%>%
   mutate(obs_date=as.Date(obs_date, format = "%d/%m/%Y"))%>%
   mutate(stage=case_when(
@@ -26,6 +25,7 @@ owl_mes=read.csv("Barn_owl_general/Data_base_dfs//BarnOwls_Legacy_20231010153920
 
 #table(owl_mes$EstimatedGrowthStage)
 
+ head(owl_mes)
 
 
 owl_sex_g=read.table("Inbreeding_depression_owls/GeneticSex_3K_RP548.txt", header = T) # sex info 
@@ -182,16 +182,6 @@ tarsus_df_all=all_pheno_df%>%
   unique()%>% ## duplicates from repeated tracking ids on \
   mutate(tarsus_scale=LeftTarsus/100)%>%
   mutate(age_acc= 55 + (662*exp(-2.341*0.89^age_days))) %>% ## account for age unsing gompertz growth
-  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
-
-
-
-
-## ~~ Tarsus length ~~ ###
-hook_length_df=all_pheno_df%>%
-  select(RingId, HookLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
-  na.omit(FuniWE,HookLength) %>% #remove NAs for important bits
-  unique()%>% ## duplicates from repeated tracking ids on \
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
 

@@ -119,8 +119,8 @@ summary(h2_split_bill)
 h2_split_mass=readRDS("Inbreeding_depression_owls/Model_outputs/2_split_stages/2.2.Mass_split_stage_h2_rank_rand.RDS")
 summary(h2_split_mass)
 
-h2_split_wing=readRDS("Inbreeding_depression_owls/Model_outputs/2_split_stages/2.3.Wing_split_stage_h2_rank_rand.RDS")
-summary(h2_split_wing)
+h2_split_tarsus=readRDS("Inbreeding_depression_owls/Model_outputs/2_split_stages/2.4.Tarsus_split_stage_h2_rank_rand.RDS")
+summary(h2_split_tarsus)
 
 
 ###### get for each trait and combine to one df for wrapping 
@@ -133,11 +133,11 @@ bill=get_variance_explained_by_rands(h2_split_bill)%>%
 mass=get_variance_explained_by_rands(h2_split_mass)%>%
   add_column(trait="Mass") ## dont yet have rank rand 
 
-wing=get_variance_explained_by_rands(h2_split_wing)%>%
-  add_column(trait="Wing Length") ## dont yet have rank rand 
+tarsus=get_variance_explained_by_rands(h2_split_tarsus)%>%
+  add_column(trait="Tarsus Length") ## dont yet have rank rand 
 
 split_stages_all=bill%>% ## df for plotting 
-  rbind(wing)%>%
+  rbind(tarsus)%>%
   rbind(mass)
 
 #### get Va for each trait ###
@@ -147,11 +147,11 @@ va_bill=get_Va_only(h2_split_bill)%>%
 va_mass=get_Va_only(h2_split_mass)%>%
   add_column(trait="Mass") ## 
 
-va_wing=get_Va_only(h2_split_wing)%>%
-  add_column(trait="Wing Length") ## 
+va_tarsus=get_Va_only(h2_split_tarsus)%>%
+  add_column(trait="Tarsus Length") ## 
 
 Va_split_stages_all=va_bill%>% ## df for plotting 
-  rbind(va_wing)%>%
+  rbind(va_tarsus)%>%
   rbind(va_mass)
 
 Va_split_stages_all[,1]
@@ -223,11 +223,11 @@ Va
 va_and_h2=Va + h2 +plot_layout(guides = "collect")
 va_and_h2
 
-fig_split=var/va_and_h2 + plot_annotation(tag_levels = 'A') +plot_layout(heights = c(5,4))
+fig_split=var/h2 + plot_annotation(tag_levels = 'A') +plot_layout(heights = c(5,4))
 
 fig_split
 
-ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/All_split_stages.png",
+ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/All_split_stages_wTarsus.png",
        plot=fig_split, 
        width = 9, 
        height = 8)

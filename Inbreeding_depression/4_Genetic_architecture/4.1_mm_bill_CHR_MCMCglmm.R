@@ -32,7 +32,8 @@ bill_arch_model<-MCMCglmm(BillLength ~ 1 +sex+age_acc+rank +hbd_sum_div,
                           data=bill_df,
                           prior = prior,
                           pr=TRUE,#
-                          nitt=50000,burnin=10000, thin = 10)
+                          #nitt=50000,burnin=10000, thin = 10
+                          )
 
 
 saveRDS(bill_arch_model,file="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.1.bill_IDarch_model_CHR.RDS") ##

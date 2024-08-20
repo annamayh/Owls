@@ -1,6 +1,4 @@
-library(RZooRoH)
-library(tidyverse)
-
+library(RZooRoH,lib = "/users/ahewett1/R")
 
 
 load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_Super-Scaffold_2.RData"))
