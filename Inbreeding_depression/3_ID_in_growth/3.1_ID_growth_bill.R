@@ -25,22 +25,22 @@ bill_df$rank=as.numeric(bill_df$rank)
 
 
 prior_bill_gr<- c(
-  prior(normal(184, 20), nlpar = "asym",  class="b", coef="Intercept"),##
+  prior(normal(184, 10), nlpar = "asym",  class="b", coef="Intercept"),##
   prior(normal(1, 2), nlpar = "b",  class="b", coef="Intercept"), ## 
   prior(normal(0.93, 0.5), nlpar = "c",  class="b", coef="Intercept"), ## 
   
-  prior(normal(0, 20), nlpar = "asym",  class="b"),## 
-  #prior(normal(0, 5), nlpar = "b",  class="b"), ## 
+  prior(normal(0, 10), nlpar = "asym",  class="b"),## 
+  prior(normal(0, 2), nlpar = "b",  class="b"), ## 
   prior(normal(0, 1), nlpar = "c",  class="b"), ## 
   
-  prior(student_t(3, 0, 17), class = "sigma", lb=0),
-  prior(student_t(3, 0, 17), class="sd",nlpar = "asym", lb=0), # 
- # prior(student_t(3, 0, 17),  class="sd", nlpar = "b", lb=0),
+  prior(student_t(3, 0, 10), class = "sigma", lb=0),
+  prior(student_t(3, 0, 10), class="sd",nlpar = "asym", lb=0), # 
+  prior(student_t(3, 0, 2),  class="sd", nlpar = "b", lb=0),
   prior(student_t(3, 0, 1),  class="sd", nlpar = "c", lb=0), 
 
   
-  prior(cauchy(0, 10), class="sd", group="RingId", nlpar = "asym", lb=0), #
-  prior(cauchy(0, 0.1),  class="sd", group="RingId", nlpar = "b", lb=0),
+  prior(cauchy(0, 2), class="sd", group="RingId", nlpar = "asym", lb=0), #
+  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.1),  class="sd", group="RingId", nlpar = "c", lb=0)
   
 )
@@ -58,10 +58,10 @@ growth_bill.mod=brm(
   family = gaussian(),
   chains = 4,
   prior = prior_bill_gr,
-  control = list(adapt_delta = 0.9),
+  control = list(adapt_delta = 0.98),
   init = 0, 
   cores = 4,
-  iter = 85000, 
+  iter = 55000, 
   warmup = 15000, 
   thin=5
   

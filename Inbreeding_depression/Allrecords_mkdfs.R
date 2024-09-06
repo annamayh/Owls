@@ -187,14 +187,6 @@ tarsus_df_all=all_pheno_df%>%
 
 
 
-## ~~ Tarsus length ~~ ###
-hook_length_df=all_pheno_df%>%
-  select(RingId, HookLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
-  na.omit(FuniWE,HookLength) %>% #remove NAs for important bits
-  unique()%>% ## duplicates from repeated tracking ids on \
-  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
-
-
 
 ## save all dfs
 

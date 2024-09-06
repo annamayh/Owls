@@ -71,6 +71,24 @@ lab_indiv=read.csv("Barn_owl_general/Data_base_dfs/Lab_20240523105823_LabIndivid
     select(LabIndividualId,IndividualIdentifier,OtherIdentifiers)
 
 big_boy_lab=read.csv("Barn_owl_general/Data_base_dfs/Ta_Switzerland_Tissue_DNA _BIG_FILE_11.01.24.csv")
+
+samples_2021=read.csv("Barn_owl_general/Data_base_dfs/Ta_2021_and_more_pour_DB_rect_12.05.22.csv")%>%
+  select(RingId, BloodSampleDate, Date.extr, plaq.extr.Tube.extr, n.ext.Mor, N..extr.verticale, Boite.ADN, place.ADN, DNA.Tube.n.,conc.ng.ul)%>%
+  filter(RingId!='')%>%
+  drop_na(RingId)
+
+samples_2022=read.csv("Barn_owl_general/Data_base_dfs/Ta_2022.csv")%>%
+  select(Ring.Number.NB, sample.type, Freezer.Cell, Blood.box.name,  tube.n...Place, Date.extr, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_Nb, conc.ng.ul)%>%
+  rename(RingId=Ring.Number.NB)
+
+samples_2023=read.csv("Barn_owl_general/Data_base_dfs/Pour_Clara_Ta_2023.csv")%>%
+  select(RingId, Tissue.Freezer.Rack.Box.Localisation, GeneticSample, BoxName, TubePlace, extr.date, DNA.Freezer.Rack.Box.Localisation, DNA_Box_Name, DNA_Tube_.Place, Hidex.C.ng.ul..26.01.24)%>%
+  filter(RingId!='')%>%
+  drop_na(RingId)
+
+
+
+
 ```
 
 ## ~ 1 ~ ##
@@ -117,6 +135,41 @@ DNA_extr_1=big_boy_lab%>%
 
 n_distinct(DNA_extr_1$RingId)
 ```
+
+From more recent years (i.e. not on the database yet)
+
+```{r}
+dead_2021_wRing_knownDd_blood=age_dead_exact%>%
+    filter(age_at_death<=90, #died before 90 days
+           RingId != "", # has ring id
+          hatch_date > as.Date("2021-01-01"))%>%
+  inner_join(samples_2021,  by = "RingId")%>%
+  filter(BloodSampleDate!=''| is.na(BloodSampleDate))
+  
+n_distinct(dead_2021_wRing_knownDd_blood$RingId)
+
+dead_2022_wRing_knownDd_blood=age_dead_exact%>%
+    filter(age_at_death<=90, #died before 90 days
+           RingId != "", # has ring id
+          hatch_date > as.Date("2021-01-01"))%>%
+  left_join(samples_2022,  by = "RingId", relationship = "many-to-many")%>%
+  filter(sample.type%in%c('Blood', 'Blood & CORT'))
+
+n_distinct(dead_2022_wRing_knownDd_blood$RingId)
+
+dead_2023_wRing_knownDd_blood=age_dead_exact%>%
+    filter(age_at_death<=90, #died before 90 days
+           RingId != "", # has ring id
+          hatch_date > as.Date("2021-01-01"))%>%
+  left_join(samples_2023,  by = "RingId", relationship = "many-to-many")%>%
+  filter(GeneticSample%in%c('Blood', 'Blood & CORT'))
+
+n_distinct(dead_2023_wRing_knownDd_blood$RingId)
+
+
+31 + 58 + 97
+```
+
 
 
 

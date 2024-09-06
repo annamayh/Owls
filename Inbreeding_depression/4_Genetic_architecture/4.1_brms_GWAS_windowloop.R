@@ -17,7 +17,16 @@ hbd_segs_list_chr <- readRDS(paste0(input_dir,"/",input_file))%>%
   rownames_to_column(var='RingId')%>%
   select_if(~ !any(is.na(.))) # remove the columns with Nas at the end of chromosomes
 
-
+## This is to skip the chromosomes that have bad quality
+if(ncol(hbd_segs_list_chr)<3){
+  print(paste0("Exiting due to NA values"))
+  stop()  # Stop program
+} else{
+  
+  start_time=Sys.time() #starting this chromosome
+  print(paste0("Starting super scaffold ",input_file," at: ", start_time))
+  
+  
 names(hbd_segs_list_chr)=make_clean_names(names(hbd_segs_list_chr)) ## removing weird syntax for pasting into model later
 
 # reading in the 
@@ -64,9 +73,7 @@ for (wind in windows){
       data = bill_with_IBDinfo,
       chains = 3,
       cores=3,
-      prior=prior_bill, ##
-      iter = 4500,
-      warmup = 2500      
+      prior=prior_bill ## default itts      
       )
     
     
@@ -80,12 +87,13 @@ for (wind in windows){
 
 }
 
+
+saveRDS(gwas_out,file=paste0(scratch,"gwas_out_",input_file,".RDS")) ##
+}
+
+
 end_time=Sys.time()
 total_elapsed = difftime(end_time, start_time, units = 'mins')
 print(paste0("Finished at: ", Sys.time()))
 print(paste0("Total elapsed time: ", round(total_elapsed, 2), " minutes"))
-
-
-
-saveRDS(gwas_out,file=paste0(scratch,"4.1_bill_brmsGWAS/gwas_out_",input_file,".RDS")) ##
 

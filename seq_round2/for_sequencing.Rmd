@@ -330,20 +330,11 @@ all_unringed_linked_blood=rbind(sample_name2_match_NB_S_N_nest_M,sample_name1_ma
   rbind(sample_name2_match_NB_nest_mark)%>%
   rbind(sample_name1_match_N_nest_M)
 
-n_distinct(check$BirdId)
+n_distinct(all_unringed_linked_blood$BirdId)
 
 
 ```
 
-Ids with unknown death date
-
-```{r}
-dead_noRing_noDd=All_after2010_noRing%>%
-  filter(BornClutchId==RaisedClutchId)%>%
-  filter(DeathDate=='')
-
-
-```
 
 
 
@@ -372,17 +363,27 @@ parents_of_inbred1s=inbred_clutches%>%
   rename(Id=BornClutchId)%>%
   left_join(clutch, by = 'Id')%>%
   pivot_longer(cols = c(MaleRing, FemaleRing), values_to = "RingId")%>%#putting parents into one col
-  filter(CrossFostered==0) ## also add na 
+  filter(CrossFostered==0|is.na(CrossFostered)) ## also add na 
 
 
 n_distinct(parents_of_inbred1s$RingId) # number of samples 
 
 all_parents_inbred1s_and_dead1s = c(parents_of_dead1s$RingId, parents_of_inbred1s$RingId)
 
+# dataframe with all inbred and dead ones parents fromm 1.1 and 1.2
 all_parents_inbred1s_and_dead1s_df = data.frame(RingId = all_parents_inbred1s_and_dead1s)%>%
   filter(RingId!='')%>%
   distinct(RingId, .keep_all = TRUE) #
 
+all_parents=all_parents_inbred1s_and_dead1s_df%>%
+  anti_join(missings, by = "RingId")%>% # remove ids from 2.1
+  anti_join(sequenced_ids, by = "RingId")%>% # remove ids previously sequenced
+  anti_join(dead_wRing_knownDd_blood, by = 'RingId')%>% # remove ids from stage 1.1
+  anti_join(ringed_sibs, by = 'RingId')%>% # remove ids from stage 1.2
+  left_join(lab,  by = "RingId")%>% # join with lab info
+  filter(SampleType%in%c("blood","Blood cell")) 
+
+n_distinct(all_parents$RingId) # number of samples 
 
   
 ```

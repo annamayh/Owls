@@ -11,7 +11,7 @@ colave="chocolate"
 
 ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_fixedb.RDS")
 summary(ib_growth_bill)
-#plot(ib_growth_bill)
+plot(ib_growth_bill)
 
 
 asym=fixef(ib_growth_bill, pars = "asym_Intercept")[,1]
