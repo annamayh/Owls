@@ -47,10 +47,11 @@ get_gwas_plot=function(input_files, trait){
 
 
 
+setwd("/Users/ahewett1/Documents")
 
-bill_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.1_bill_glmmTMBGWAS_200wind/glmmTMB_gwas_out_HBD_perID_200-snp-wind_Super-Scaffold_*.RDS.RDS"
-mass_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.2_mass_glmmTMBGWAS/Mass_glmmTMB_gwas_out_HBD_perID_200-snp-wind_Super-Scaffold_*.RDS.RDS"
-tarsus_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.4_tarsus_glmmTMBGWAS/Tarsus_glmmTMB_gwas_out_HBD_perID_200-snp-wind_Super-Scaffold_*.RDS.RDS"
+bill_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.1_bill_glmmTMB_GWAS_10gens/*.RDS.RDS"
+mass_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.2_mass_glmmTMB_GWAS_10gens/*.RDS.RDS"
+tarsus_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.4_tarsus_glmmTMB_GWAS_10gens/*.RDS.RDS"
 
 
 
@@ -68,7 +69,7 @@ gwas_plot=bill_gwas/mass_gwas/tarsus_gwas+
 gwas_plot
 
 ggsave(gwas_plot,
-       file = "Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4_glmmTMB_gwas_7500wind_all.png",
+       file = "Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4_glmmTMB_gwas_200wind_10gens.png",
        width = 10,
        height = 8)
 

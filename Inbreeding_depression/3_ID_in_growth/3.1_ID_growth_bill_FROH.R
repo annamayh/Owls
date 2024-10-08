@@ -23,7 +23,6 @@ bill_df$nestboxID=as.factor(bill_df$nestboxID)
 bill_df$rank=as.numeric(bill_df$rank)
 
 
-
 prior_bill_gr<- c(
   prior(normal(184, 10), nlpar = "asym",  class="b", coef="Intercept"),##
   prior(normal(1, 2), nlpar = "b",  class="b", coef="Intercept"), ## 
@@ -46,29 +45,28 @@ prior_bill_gr<- c(
 )
 
 
-
 growth_bill.mod=brm(
   ## model 
   bf(BillLength ~ asym * exp(-b*(c)^age_days),
-     asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
+     asym ~ 1 + FHBD512gen + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 + (1|clutch_merge) + (1|RingId),
-     c ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|RingId), 
+     c ~ 1 + FHBD512gen + rank + sex + (1|clutch_merge) + (1|RingId), 
      nl=TRUE),
   data=bill_df, 
   family = gaussian(),
   chains = 4,
   prior = prior_bill_gr,
-  control = list(adapt_delta = 0.9),
+  control = list(adapt_delta = 0.98),
   init = 0, 
   cores = 4,
-  iter = 110000, 
-  warmup = 45000, 
-  thin=5
+  iter = 45000, 
+  warmup = 10000, 
+  thin=10
   
 )
 
 
-saveRDS(growth_bill.mod,file=paste0(scratch,"3.1.bill_gr_fixedb.RDS")) ##
+saveRDS(growth_bill.mod,file=paste0(scratch,"3.1.bill_gr_FROH_fixedb.RDS")) ##
 
 summary(growth_bill.mod)
 

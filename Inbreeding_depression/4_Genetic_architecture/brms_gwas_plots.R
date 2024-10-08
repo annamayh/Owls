@@ -3,7 +3,7 @@ library(patchwork)
 
 setwd("/Users/ahewett1/Documents")
 
-bill_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.1_bill_brmsGWAS/gwas_out_HBD_perID_7500-snp-wind_Super-Scaffold_*.RDS.RDS"
+bill_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.4_tarsus_brmsGWAS/*.RDS.RDS"
 
 
 gwas_output_list <- lapply(Sys.glob(paste0(bill_files)), readRDS)
@@ -56,14 +56,14 @@ brms_gwas=ggplot(unlisted_gwas, aes(x=Order, y=Estimate,
         axis.text.x = element_text(angle = 60, hjust=1))+
   scale_color_manual(values=c(colour1, colour2),guide=FALSE)+
   scale_alpha_identity() +
-  labs(x="Super scaffold", y='Estimate + CIs', title = 'Bill Length')
+  labs(x="Super scaffold", y='Estimate + CIs', title = 'Tarsus Length')
 
 
 brms_gwas
 
 
 ggsave(brms_gwas,
-       file = "Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4_brms_bill.png",
-       width = 8,
+       file = "Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4_brms_tarsus.png",
+       width = 9,
        height = 4)
 

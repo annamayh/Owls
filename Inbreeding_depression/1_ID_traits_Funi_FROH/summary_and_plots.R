@@ -6,7 +6,7 @@ library(patchwork)
 library(ggExtra)
 
 ## Basic inbreeding depression models accounting for age ... using 2 types of inbreeding coefficient: FROH and Funi ##
-## 3 traits investigated: bill, mass and wing length
+## 3 traits investigated: bill, mass and tarsus length
 
 setwd("/Users/ahewett1/Documents")
 ## BILL##
@@ -15,21 +15,21 @@ id_bill_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGR
 ## MASS ##
 id_mass_funi=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.2.ID_mass_GRM_Funi_unscaled.RDS")
 id_mass_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.2.ID_mass_GRM_FROH_unscaled.RDS")
-## WING ##
-id_wing_funi=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.3.ID_wing_GRM_Funi_unscaled.RDS")
-id_wing_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.3.ID_wing_GRM_FROH_unscaled.RDS")
+## tarsus ##
+id_tarsus_funi=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.4.ID_tarsus_GRM_Funi.RDS")
+id_tarsus_froh=readRDS("Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/1.4.ID_tarsus_GRM_FROH.RDS")
 
-bill_data=read.table("Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",sep=",", header=T)
+#bill_data=read.table("Inbreeding_depression_owls/pheno_df/bill_all_pheno_df.txt",sep=",", header=T)
 
 ## check convergence and initial estimates
 summary(id_bill_funi) ## 
 summary(id_bill_froh)
 
-summary(id_mass_funi) ## running againn 
+summary(id_mass_funi) ##
 summary(id_mass_froh)
 
-summary(id_wing_funi)
-summary(id_wing_froh)
+summary(id_tarsus_funi)
+summary(id_tarsus_froh)
 
 #plot(id_bill_funi) ## 
 #plot(id_bill_funi)
@@ -46,7 +46,7 @@ extract_ID_est=function(model){
 }
 
 
-ID_froh_models=list(id_bill_funi,id_bill_froh,id_mass_funi,id_mass_froh,id_wing_funi,id_wing_froh)
+ID_froh_models=list(id_bill_funi,id_bill_froh,id_mass_funi,id_mass_froh,id_tarsus_funi,id_tarsus_froh)
 
 f_ests_all_models=NULL
 for (i in 1:length(ID_froh_models)){
@@ -114,7 +114,7 @@ both
 
 
 ggsave(both, 
-       file= "Inbreeding_depression_owls/Model_outputs/unscaled_ID_wGRM/funiVfroh.png",
+       file= "Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/funiVfroh.png",
        width = 7,
        height = 5,
        bg = 'white'

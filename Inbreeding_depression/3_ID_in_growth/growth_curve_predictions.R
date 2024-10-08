@@ -5,22 +5,23 @@ library(patchwork)
 library(ggExtra)
 setwd("/Users/ahewett1/Documents")
 
-f=0.25
+f=0.5
 colinb="goldenrod1"
 colave="chocolate"
 
-ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_fixedb.RDS")
+ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_FROH_fixedb.RDS")
 summary(ib_growth_bill)
-plot(ib_growth_bill)
+#prior_summary(ib_growth_bill)
+#plot(ib_growth_bill)
 
 
 asym=fixef(ib_growth_bill, pars = "asym_Intercept")[,1]
 b=fixef(ib_growth_bill, pars = "b_Intercept")[,1]
 c=fixef(ib_growth_bill, pars = "c_Intercept")[,1]
 
-## for bill only b and c are sig 
-fb=b+(f*fixef(ib_growth_bill, pars = "b_FuniWE")[,1])
-fc=c+(f*fixef(ib_growth_bill, pars = "c_FuniWE")[,1])
+## for bill nothing sig for inbreeding 
+#fb=b+(f*fixef(ib_growth_bill, pars = "b_FuniWE")[,1])
+#fc=c+(f*fixef(ib_growth_bill, pars = "c_FuniWE")[,1])
 
 
 id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
@@ -30,9 +31,8 @@ id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
   theme_classic()+
   labs(x="Age in days", y="Bill Length (mm)")+
   stat_function(fun=~ (asym*0.1)*exp(-b*(c)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
-  
-  stat_function(fun=~(asym*0.1)*exp(-fb*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
-## inbred at F=0.15 
+  # (* 0.1 to get bill length in mm)
+  stat_function(fun=~(asym*0.1)*exp(-b*(c)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
 
 id_bill
 
@@ -41,7 +41,7 @@ id_bill
 ##################
 ib_growth_mass=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_fixedb.RDS")
 summary(ib_growth_mass)
-plot(ib_growth_mass)
+#plot(ib_growth_mass)
 
 asym_m=fixef(ib_growth_mass, pars = "asym_Intercept")[,1]
 b_m=fixef(ib_growth_mass, pars = "b_Intercept")[,1]
@@ -71,9 +71,9 @@ id_mass
 ### TARSUS ####
 #################
 
-ib_growth_tarsus=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.4_tarsus_gr.RDS")
+ib_growth_tarsus=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.4_tarsus_gr_FROH_fixedb.RDS")
 summary(ib_growth_tarsus)
-plot(ib_growth_tarsus)
+#plot(ib_growth_tarsus)
 
 asym1_t=fixef(ib_growth_tarsus, pars = "asym1_Intercept")[,1]
 asym_t=fixef(ib_growth_tarsus, pars = "asym_Intercept")[,1]
@@ -81,17 +81,17 @@ b_t=fixef(ib_growth_tarsus, pars = "b_Intercept")[,1]
 c_t=fixef(ib_growth_tarsus, pars = "c_Intercept")[,1]
 
 #fasym_t=asym_t+(f*fixef(ib_growth_tarsus, pars = "asym_FuniWE")[,1]) # not sig asymp
-fc=c_t+(f*fixef(ib_growth_tarsus, pars = "c_FuniWE")[,1]) ## c not sig
+fc_t=c_t+(f*fixef(ib_growth_tarsus, pars = "c_FHBD512gen")[,1]) ## c not sig
 
 
 id_tarsus=ggplot(ib_growth_tarsus$data, aes(x=age_days, y=LeftTarsus))+
   geom_point(alpha=0.1, colour="black", linewidth=2)+
-  xlim (0,50)+
+  xlim (0,80)+
  # ylim(0,100)+
   theme_classic()+
   labs(x="Age in days", y="Tarsus length (mm)")+
-  stat_function(fun=~ asym1_t + asym_t*exp(-b_t*(c_t)^.x), colour=colave, size=1.5, xlim=c(0,50), alpha=0.8)+ ##male (intercept)
-  stat_function(fun=~ asym1_t +asym_t*exp(-b_t*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,50), alpha=0.8)
+  stat_function(fun=~ asym1_t + asym_t*exp(-b_t*(c_t)^.x), colour=colave, size=1.5, xlim=c(0,80), alpha=0.8)+ ##male (intercept)
+  stat_function(fun=~ asym1_t +asym_t*exp(-b_t*(fc_t)^.x), colour=colinb, size=1.5, xlim=c(0,80), alpha=0.8)
 ## inbred at F=0.15 
 
 id_tarsus
@@ -133,8 +133,8 @@ id_tarsus
 
 
 
-
-all_growth=id_mass/id_wing/id_bill+plot_annotation(tag_levels = 'A')
+library(patchwork)
+all_growth=id_mass/id_tarsus/id_bill+plot_annotation(tag_levels = 'A')
 all_growth
 
 

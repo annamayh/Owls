@@ -7,7 +7,7 @@ ss=args[1]
 load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_",ss,".RData"))
 
 
-snp_window_size=200
+snp_window_size=2500
 ids_HBD_chr=list()
 number_ids=data_Rohs@nind
 
@@ -26,7 +26,7 @@ for (id in 1:number_ids){
                         chrom = 1, ## as it has been run per chromosome, chr number always =1
                         startPos = data_Rohs@bp[window], ## snp bp at start of window 
                         endPos = data_Rohs@bp[window+overlap], ## by snp window size
-                        T = 10  # 10 generations back 
+                        T = 40  # 20 generations back but max is 16
                         )
 
           seg_ibc=mean(y1) # get mean pr HBD for window
@@ -48,5 +48,5 @@ row.names(m_HBD_segs)=data_Rohs@sample_ids
 colnames(m_HBD_segs) <- c(paste0("pr_HBD_", ss , "_wind_", 1:seed))
 
 
-saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_per_window_10gens/10_gens_HBD_perID_",snp_window_size,"-wind_",ss,".RDS"))
+saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_per_window_2500_16gens/16_gens_HBD_perID_",snp_window_size,"-wind_",ss,".RDS"))
 
