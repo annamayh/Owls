@@ -50,10 +50,9 @@ prior_bill=c(prior(student_t(3, 180,15), class = "Intercept"), ##
 
 
 gwas_out=NULL
-#gwas_mods=list()
 counter=0
 start_time=Sys.time()
-
+model_save=list()
 
 for (wind in windows){
     
@@ -106,6 +105,8 @@ for (wind in windows){
     
     gwas_out=rbind(gwas_out, f_ests)
     
+    model_save[[wind]]=gwas_mod
+    
     if (as.numeric(counter) %% 10 == 0) {
       print(paste0(">>> FINISHED WINDOW ", counter, " OF ",length(windows)))
     }
@@ -114,11 +115,10 @@ for (wind in windows){
 
 
 saveRDS(gwas_out,file=paste0(scratch,"gwas_out_",input_file,".RDS")) ##
+saveRDS(model_save, file = paste0(scratch, "Model_windows_full_output", input_file))
 }
 
 
-summary(gwas_mod)
-plot(gwas_mod)
 
 end_time=Sys.time()
 total_elapsed = difftime(end_time, start_time, units = 'mins')

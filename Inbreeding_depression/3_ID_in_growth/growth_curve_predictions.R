@@ -21,7 +21,7 @@ c=fixef(ib_growth_bill, pars = "c_Intercept")[,1]
 
 ## for bill nothing sig for inbreeding 
 #fb=b+(f*fixef(ib_growth_bill, pars = "b_FuniWE")[,1])
-#fc=c+(f*fixef(ib_growth_bill, pars = "c_FuniWE")[,1])
+fc=c+(f*fixef(ib_growth_bill, pars = "c_FHBD512gen")[,1])
 
 
 id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
@@ -32,7 +32,7 @@ id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
   labs(x="Age in days", y="Bill Length (mm)")+
   stat_function(fun=~ (asym*0.1)*exp(-b*(c)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
   # (* 0.1 to get bill length in mm)
-  stat_function(fun=~(asym*0.1)*exp(-b*(c)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
+  stat_function(fun=~(asym*0.1)*exp(-b*(fc)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
 
 id_bill
 
@@ -81,12 +81,12 @@ b_t=fixef(ib_growth_tarsus, pars = "b_Intercept")[,1]
 c_t=fixef(ib_growth_tarsus, pars = "c_Intercept")[,1]
 
 #fasym_t=asym_t+(f*fixef(ib_growth_tarsus, pars = "asym_FuniWE")[,1]) # not sig asymp
-fc_t=c_t+(f*fixef(ib_growth_tarsus, pars = "c_FHBD512gen")[,1]) ## c not sig
+fc_t=c_t+(f*fixef(ib_growth_tarsus, pars = "c_FHBD512gen")[,1]) ## c sig
 
 
 id_tarsus=ggplot(ib_growth_tarsus$data, aes(x=age_days, y=LeftTarsus))+
-  geom_point(alpha=0.1, colour="black", linewidth=2)+
-  xlim (0,80)+
+  geom_point(alpha=0.08, colour="black", linewidth=2)+
+  xlim (0,70)+
  # ylim(0,100)+
   theme_classic()+
   labs(x="Age in days", y="Tarsus length (mm)")+
