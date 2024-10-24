@@ -25,8 +25,8 @@ for (id in 1:number_ids){
                         id = id, ## specific id
                         chrom = 1, ## as it has been run per chromosome, chr number always =1
                         startPos = data_Rohs@bp[window], ## snp bp at start of window 
-                        endPos = data_Rohs@bp[window+overlap], ## by snp window size
-                        T = 40  # 20 generations back but max is 16
+                        endPos = data_Rohs@bp[window+overlap]#, ## by snp window size
+                        #T = 40  # 20 generations back but max is 16
                         )
 
           seg_ibc=mean(y1) # get mean pr HBD for window

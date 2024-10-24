@@ -4,7 +4,7 @@ library(RZooRoH,lib = "/users/ahewett1/R")
 load(paste0("./elavanc1/ID_in3K/data/4_ROHs/EntireRsession_All3085_NewNamesCORRECTED_AUTOSAUMES_RP502SNPs_GenPOSplus10_Model13HBDclasses_ss_Super-Scaffold_2.RData"))
 
 
-snp_window_size=200
+snp_window_size=2500
 ids_HBD_chr=list()
 number_ids=data_Rohs@nind
 
@@ -22,8 +22,8 @@ for (id in 1:number_ids){
                         id = id, ## specific id
                         chrom = 1, ## as it has been run per chromosome, chr number always =1
                         startPos = data_Rohs@bp[window], ## snp bp at start of window 
-                        endPos = data_Rohs@bp[window+overlap], ## by snp window size
-                        T=10) 
+                        endPos = data_Rohs@bp[window+overlap] ## by snp window size
+                        ) 
 
           seg_ibc=mean(y1) # get mean pr HBD for window
           id_ibc_seg_list[[seed]] <-  seg_ibc ## mean pr of being HBD for specific section 
@@ -41,8 +41,8 @@ for (id in 1:number_ids){
 m_HBD_segs=do.call(rbind, ids_HBD_chr) ## 
 
 row.names(m_HBD_segs)=data_Rohs@sample_ids
-colnames(m_HBD_segs) <- c(paste0("pr_HBD_Super-Scaffold_2_wind_", 1:seed))
+colnames(m_HBD_segs) <- c(paste0("pr_HBD_", ss , "_wind_", 1:seed))
 
 
-saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_per_window_10gens/10_gens_HBD_perID_",snp_window_size,"-wind_Super-Scaffold_2.RDS"))
+saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_per_window_2500/HBD_perID_",snp_window_size,"-wind_Super-Scaffold_2.RDS"))
 

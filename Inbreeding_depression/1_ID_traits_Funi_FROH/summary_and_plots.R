@@ -98,6 +98,7 @@ funi+froh+plot_annotation(tag_levels = 'A')
 
 
 both=f_ests_all_models%>%
+  mutate(trait = factor(trait, levels=c('LeftTarsus','Mass', 'BillLength'))) %>%
   ggplot(aes(x=trait, y=Estimate, ymin=Q2.5, ymax=Q97.5,colour=trait, shape=F)) +
   theme_minimal() +
   geom_pointrange(fatten = 7, position = position_dodge2(width = 0.5) )+
@@ -105,17 +106,24 @@ both=f_ests_all_models%>%
   geom_hline(yintercept = 0, lty=2)+
   scale_color_viridis(discrete = TRUE, end = 0.8) +
   theme(text = element_text(size = 18), 
-        axis.title.y = element_blank())+
+        axis.title.y = element_blank(), 
+        legend.title = element_blank())+
   labs( y="Inbreeding depression (\u03B2)")+
   guides(colour='none', shape = guide_legend(reverse = TRUE))+
-  scale_shape_discrete(name = "Inbreeding Coeff", labels = c("FROH", "Funi"))
-
+  scale_shape_discrete(labels = c(expression('F'[ROH]), expression('F'[uniWE])))+
+  scale_x_discrete(labels = c('BillLength' = 'Bill \nLength', 'Mass' = 'Mass', 'LeftTarsus' = 'Tarsus \nLength'))
 both
 
 
 ggsave(both, 
        file= "Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/funiVfroh.png",
-       width = 7,
-       height = 5,
+       width = 5,
+       height = 4,
        bg = 'white'
        )
+
+
+mean(id_bill_froh$data$BillLength)
+
+mean(id_mass_froh$data$Mass)
+

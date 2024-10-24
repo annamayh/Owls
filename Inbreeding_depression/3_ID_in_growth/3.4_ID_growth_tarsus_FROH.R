@@ -41,7 +41,7 @@ prior_tarsus_gr<- c(
   
   prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym1", lb=0),
   prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym", lb=0), # priors for within id effect 
-  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
+  #prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
   
 )
@@ -52,18 +52,18 @@ growth_tarsus.mod=brm(
   bf(LeftTarsus ~ asym1 + (asym * exp(-b*(c)^age_days)),
      asym1 ~ 1 + (1|RingId), ## assuming there is no effect at age 0 
      asym ~ 1 + FHBD512gen + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
-     b ~ 1 + (1|RingId),
+     b ~ 1 ,
      c ~ 1 + FHBD512gen + rank + sex + (1|RingId), 
      nl=TRUE),
   data=tarsus_df, 
   family = gaussian(),
   chains = 4,
   prior = prior_tarsus_gr,
-  control = list(adapt_delta = 0.98),
+  control = list(adapt_delta = 0.99),
   init = 0, 
   cores = 4,
-  iter = 45000, 
-  warmup = 10000, 
+  iter = 55000, 
+  warmup = 15000, 
   thin=10
   
 )
@@ -73,7 +73,7 @@ growth_tarsus.mod=brm(
 
 
 ### save into outputs folder
-saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_FROH_fixedb.RDS")) ##
+saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_FROH_totalfixedb.RDS")) ##
 
 summary(growth_tarsus.mod)
 

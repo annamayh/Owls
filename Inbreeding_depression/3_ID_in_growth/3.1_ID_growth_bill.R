@@ -35,12 +35,12 @@ prior_bill_gr<- c(
   
   prior(student_t(3, 0, 10), class = "sigma", lb=0),
   prior(student_t(3, 0, 10), class="sd",nlpar = "asym", lb=0), # 
-  prior(student_t(3, 0, 2),  class="sd", nlpar = "b", lb=0),
+ # prior(student_t(3, 0, 2),  class="sd", nlpar = "b", lb=0),
   prior(student_t(3, 0, 1),  class="sd", nlpar = "c", lb=0), 
 
   
   prior(cauchy(0, 2), class="sd", group="RingId", nlpar = "asym", lb=0), #
-  prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
+  #prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.1),  class="sd", group="RingId", nlpar = "c", lb=0)
   
 )
@@ -51,24 +51,24 @@ growth_bill.mod=brm(
   ## model 
   bf(BillLength ~ asym * exp(-b*(c)^age_days),
      asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
-     b ~ 1 + (1|clutch_merge) + (1|RingId),
+     b ~ 1 ,
      c ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|RingId), 
      nl=TRUE),
   data=bill_df, 
   family = gaussian(),
   chains = 4,
   prior = prior_bill_gr,
-  control = list(adapt_delta = 0.9),
+  control = list(adapt_delta = 0.98),
   init = 0, 
   cores = 4,
-  iter = 110000, 
-  warmup = 45000, 
-  thin=5
+  iter = 45000, 
+  warmup = 10000, 
+  thin=10
   
 )
 
 
-saveRDS(growth_bill.mod,file=paste0(scratch,"3.1.bill_gr_fixedb.RDS")) ##
+saveRDS(growth_bill.mod,file=paste0(scratch,"3.1.bill_gr_totalfixedb.RDS")) ##
 
 summary(growth_bill.mod)
 

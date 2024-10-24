@@ -5,11 +5,11 @@ library(patchwork)
 library(ggExtra)
 setwd("/Users/ahewett1/Documents")
 
-f=0.5
+f=0.25
 colinb="goldenrod1"
 colave="chocolate"
 
-ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_FROH_fixedb.RDS")
+ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_FROH_totalfixedb.RDS")
 summary(ib_growth_bill)
 #prior_summary(ib_growth_bill)
 #plot(ib_growth_bill)
@@ -21,7 +21,7 @@ c=fixef(ib_growth_bill, pars = "c_Intercept")[,1]
 
 ## for bill nothing sig for inbreeding 
 #fb=b+(f*fixef(ib_growth_bill, pars = "b_FuniWE")[,1])
-fc=c+(f*fixef(ib_growth_bill, pars = "c_FHBD512gen")[,1])
+#fc=c+(f*fixef(ib_growth_bill, pars = "c_FHBD512gen")[,1])
 
 
 id_bill=ggplot(ib_growth_bill$data, aes(x=age_days, y=(BillLength*0.1)))+
@@ -39,7 +39,7 @@ id_bill
 #################
 #####  Mass #####
 ##################
-ib_growth_mass=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_fixedb.RDS")
+ib_growth_mass=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_FROH_totalfixedb.RDS")
 summary(ib_growth_mass)
 #plot(ib_growth_mass)
 
@@ -47,9 +47,9 @@ asym_m=fixef(ib_growth_mass, pars = "asym_Intercept")[,1]
 b_m=fixef(ib_growth_mass, pars = "b_Intercept")[,1]
 c_m=fixef(ib_growth_mass, pars = "c_Intercept")[,1]
 
-fasym_m=asym_m+(f*fixef(ib_growth_mass, pars = "asym_FuniWE")[,1])
+#fasym_m=asym_m+(f*fixef(ib_growth_mass, pars = "asym_FuniWE")[,1])
 #fb_m=b_m+(f*fixef(ib_growth_mass, pars = "b_FuniWE")[,1])
-#fc_m=c_m+(f*fixef(ib_growth_mass, pars = "c_FuniWE")[,1])
+fc_m=c_m+(f*fixef(ib_growth_mass, pars = "c_FHBD512gen")[,1])
 
 
 
@@ -61,7 +61,7 @@ id_mass=ggplot(ib_growth_mass$data, aes(x=age_days, y=Mass))+
   labs(x="Age in days", y="Mass (g)")+
   stat_function(fun=~ asym_m*exp(-b_m*(c_m)^.x), colour=colave, size=1.5, xlim=c(0,88), alpha=0.8)+ ##male (intercept)
   
-  stat_function(fun=~fasym_m*exp(-b_m*(c_m)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
+  stat_function(fun=~asym_m*exp(-b_m*(fc_m)^.x), colour=colinb, size=1.5, xlim=c(0,88), alpha=0.8)
 
 id_mass
 

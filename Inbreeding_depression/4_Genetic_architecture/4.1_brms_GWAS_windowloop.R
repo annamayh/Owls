@@ -58,7 +58,6 @@ prior_bill=c(prior(student_t(3, 180,15), class = "Intercept"), ##
 gwas_out=NULL
 counter=0
 start_time=Sys.time()
-model_save=list()
 
 
 for (wind in windows){
@@ -73,9 +72,10 @@ for (wind in windows){
     gwas_mod=brm(
       formula = form_wind,
       data = bill_with_IBDinfo,
-      chains = 3,
-      cores=3,
-      prior=prior_bill ## default itts      
+      chains = 4,
+      cores=4,
+      prior=prior_bill, 
+      iter=5000
       )
     
     # output estimate of window for each chain
@@ -108,8 +108,7 @@ for (wind in windows){
     )
     # merge with previous window info
     gwas_out=rbind(gwas_out, f_ests)
-    model_save[[wind]]=gwas_mod ## saving full outputs of the model 
-    
+
     if (as.numeric(counter) %% 10 == 0) {
       print(paste0(">>> FINISHED WINDOW ", counter, " OF ",length(windows)))
     }
@@ -118,7 +117,6 @@ for (wind in windows){
 
 
 saveRDS(gwas_out,file=paste0(scratch,"gwas_out_",input_file,".RDS")) ##
-saveRDS(model_save, file = paste0(scratch, "Model_windows_full_output", input_file))
 
 }
 
