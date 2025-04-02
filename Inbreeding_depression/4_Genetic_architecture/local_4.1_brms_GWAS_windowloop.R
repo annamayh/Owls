@@ -4,10 +4,11 @@ library(janitor)
 library(dplyr)
 library(tibble)
 
+setwd("/Users/ahewett1/Documents")
 
 
-hbd_segs_list_chr <- readRDS("Inbreeding_depression_owls/ROH_regions/HBD_segs_out/HBD_perID_2500-snp-wind_Super-Scaffold_11.RDS")%>%
-  as.data.frame()%>%
+hbd_segs_list_chr <- readRDS("Inbreeding_depression_owls/ROH_regions/HBD_segs_out/HBD_per_window_2500/HBD_perID_2500-snp-wind_Super-Scaffold_1.RDS")%>%
+  as.data.frame()#%>%
   rownames_to_column(var='RingId')%>%
   select_if(~ !any(is.na(.))) # remove the columns with Nas at the end of chromosomes
 
@@ -66,9 +67,10 @@ for (wind in windows){
     gwas_mod=brm(
       formula = form_wind,
       data = bill_with_IBDinfo,
-      chains = 3,
-      cores=3,
-      prior=prior_bill ## default itts      
+      chains = 4,
+      cores=4,
+      prior=prior_bill, 
+      iter=5000     
       )
     
     summary(gwas_mod)

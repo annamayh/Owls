@@ -14,7 +14,7 @@ scratch=args[3]
 
 hbd_segs_list_chr <- readRDS(paste0(input_dir,"/",input_file))%>%
   as.data.frame()%>%
-  rownames_to_column(var='RingId')%>%
+  #rownames_to_column(var='RingId')%>%
   select_if(~ !any(is.na(.))) # remove the columns with Nas at the end of chromosomes
 
 ## This is to skip the chromosomes that have bad quality

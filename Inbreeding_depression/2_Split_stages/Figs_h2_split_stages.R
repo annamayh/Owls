@@ -231,3 +231,14 @@ ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/All_split_
        plot=fig_split, 
        width = 9, 
        height = 8)
+
+
+ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/Var_all_only.png",
+       plot=var, 
+       width = 9, 
+       height = 5)
+
+ggsave("Inbreeding_depression_owls/Model_outputs/2_split_stages/plots/Va_and_h2_supp.png",
+       plot=va_and_h2, 
+       width = 12, 
+       height = 5)

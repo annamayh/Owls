@@ -136,6 +136,7 @@ mass_df_all=all_pheno_df%>%
   mutate(age_acc=362*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
+plot(mass_df_all$age_days[mass_df_all$age_days < 90], mass_df_all$Mass[mass_df_all$age_days < 90])
 
 n_distinct(mass_df_all$RingId) ##2261 ids with mass records, 11150 records
 
@@ -146,11 +147,13 @@ table(mass_df_all$gr_stage)
 bill_df_all=all_pheno_df%>%
   select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
   na.omit(BillLength,FuniWE) %>%#remove NAs
+  filter(!(BillLength<50 & age_days >5))%>% #filtering out 1 ids that are probably incorrect 
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(bill_scale=BillLength/100) %>% ## rescaling for ease of model convergence
   mutate(age_acc=184*exp(-0.99*0.932^age_days)) %>%## account for age using gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
+plot(bill_df_all$age_days[bill_df_all$age_days < 90], bill_df_all$BillLength[bill_df_all$age_days < 90])
 
 
 
@@ -159,33 +162,18 @@ n_distinct(bill_df_all$RingId) ##2298 ids with records, 6746
 table(bill_df_all$gr_stage)
 
 
-# ~~ wing length ~~  ####
-## more records for wing length than tarsus so maybe good to look at both??
-wing_df_all=all_pheno_df%>%
-  select(RingId, LeftWing, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage,min_mes)%>% ##remove phenotype info we may not have 
-  na.omit(LeftWing,FuniWE) %>%#remove NAs
-  unique() %>%## duplicates from repeated tracking ids on 
-  mutate(wing_scale=LeftWing/100) %>%## rescaling for ease of model convergence
-  mutate(age_acc=298*exp(-4.19*0.945^age_days)) %>% ## account for age unsing gompertz growth
-  mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
-
-
-n_distinct(wing_df_all$RingId) ##2296 ids with records, 10747 records
-
-table(wing_df_all$gr_stage)
-
-
 ## ~~ Tarsus length ~~ ###
 tarsus_df_all=all_pheno_df%>%
   select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
   na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
+  filter(!(LeftTarsus<200 & age_days >20))%>% #filtering out 6 ids that are probably incorrect i.e. when their tarsus is very small for their age
   unique()%>% ## duplicates from repeated tracking ids on \
   mutate(tarsus_scale=LeftTarsus/100)%>%
   mutate(age_acc= 55 + (662*exp(-2.341*0.89^age_days))) %>% ## account for age unsing gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
 
-
+plot(tarsus_df_all$age_days[tarsus_df_all$age_days < 90], tarsus_df_all$LeftTarsus[tarsus_df_all$age_days < 90])
 
 
 ## save all dfs
@@ -201,12 +189,6 @@ write.table(bill_df_all,
 write.table(mass_df_all,
             file = "Inbreeding_depression_owls/pheno_df/mass_all_pheno_df.txt",
             row.names = F, quote = F, sep = ",",na = "NA")
-
-
-write.table(wing_df_all,
-            file = "Inbreeding_depression_owls/pheno_df/wing_all_pheno_df.txt",
-            row.names = F, quote = F, sep = ",",na = "NA")
-
 
 
 

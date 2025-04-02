@@ -31,6 +31,12 @@ summary(id_mass_froh)
 summary(id_tarsus_funi)
 summary(id_tarsus_froh)
 
+0.25*-43.41
+
+
+#plot(id_tarsus_froh)
+
+
 #plot(id_bill_funi) ## 
 #plot(id_bill_funi)
 
@@ -121,6 +127,11 @@ ggsave(both,
        height = 4,
        bg = 'white'
        )
+
+
+
+save(both, 
+       file= "Inbreeding_depression_owls/Model_outputs/1_unscaled_ID_wGRM/funiVfroh.RData")
 
 
 mean(id_bill_froh$data$BillLength)

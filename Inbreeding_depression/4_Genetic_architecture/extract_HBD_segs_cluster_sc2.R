@@ -41,7 +41,7 @@ for (id in 1:number_ids){
 m_HBD_segs=do.call(rbind, ids_HBD_chr) ## 
 
 row.names(m_HBD_segs)=data_Rohs@sample_ids
-colnames(m_HBD_segs) <- c(paste0("pr_HBD_", ss , "_wind_", 1:seed))
+colnames(m_HBD_segs) <- c(paste0("pr_HBD_Super-Scaffold_2_wind_", 1:seed))
 
 
 saveRDS(m_HBD_segs,file=paste0("./ahewett/ID_owls/outputs/4_gen_arch/HBD_per_window_2500/HBD_perID_",snp_window_size,"-wind_Super-Scaffold_2.RDS"))

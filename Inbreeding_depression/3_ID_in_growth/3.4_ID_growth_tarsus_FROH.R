@@ -1,8 +1,8 @@
 ### ID in growth rate of tarsus ###
 
-library(brms,  lib = "/users/ahewett1/R")
-library(corpcor,  lib = "/users/ahewett1/R")
-library(readr,  lib = "/users/ahewett1/R")
+.libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths()))
+
+library(brms)
 
 ##################################################################################
 ########################### ~~ tarsus ~~ #############################################
@@ -39,7 +39,7 @@ prior_tarsus_gr<- c(
   #prior(student_t(3, 0, 5),  class="sd", nlpar = "b", lb=0),
   prior(student_t(3, 0, 1),  class="sd", nlpar = "c", lb=0), 
   
-  prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym1", lb=0),
+  #prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym1", lb=0),
   prior(cauchy(0, 5), class="sd", group="RingId", nlpar = "asym", lb=0), # priors for within id effect 
   #prior(cauchy(0, 0.5),  class="sd", group="RingId", nlpar = "b", lb=0),
   prior(cauchy(0, 0.2),  class="sd", group="RingId", nlpar = "c", lb=0)
@@ -50,7 +50,7 @@ prior_tarsus_gr<- c(
 growth_tarsus.mod=brm(
   ## model 
   bf(LeftTarsus ~ asym1 + (asym * exp(-b*(c)^age_days)),
-     asym1 ~ 1 + (1|RingId), ## assuming there is no effect at age 0 
+     asym1 ~ 1, ## assuming there is no effect at age 0 
      asym ~ 1 + FHBD512gen + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 ,
      c ~ 1 + FHBD512gen + rank + sex + (1|RingId), 
