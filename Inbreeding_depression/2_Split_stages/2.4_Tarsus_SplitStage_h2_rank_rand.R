@@ -1,6 +1,8 @@
-library(brms,  lib = "/users/ahewett1/R")
-library(corpcor,  lib = "/users/ahewett1/R")
-library(readr,  lib = "/users/ahewett1/R")
+.libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths())) #specify library cluster path
+
+library(brms)
+library(corpcor)
+library(readr)
 
 ##################################################################################
 ########################### ~~ Tarsus ~~ #############################################
@@ -30,8 +32,9 @@ GRM <- as(grm_filt_pd, "dgCMatrix")
 
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
 prior_tarsus=c( 
-             prior(student_t(3,0,90), class = "sd"),
-             prior(cauchy(0, 10), class = "sd", group="RingId_pe")
+          prior(student_t(3, 650, 30), class = "Intercept"),
+          prior(student_t(3, 0, 90), class = "sd"),
+          prior(normal(0, 10), class = "sd", group="RingId_pe")
              )
 
 
@@ -55,4 +58,4 @@ mod_tarsus_GRM.split_stage_h2 <- brm(
 
 summary(mod_tarsus_GRM.split_stage_h2) ###
 
-saveRDS(mod_tarsus_GRM.split_stage_h2,file=paste0(scratch,"2.4.Tarsus_split_stage_h2_rank_rand.RDS")) ##
+saveRDS(mod_tarsus_GRM.split_stage_h2,file=paste0(scratch,"2.4.tarsus_split_stage_subset.RDS")) ##

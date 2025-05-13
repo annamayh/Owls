@@ -20,7 +20,7 @@ col_none='black'
 ###############################################################
 ## atm neither froh or fgrm show ID in any growth
 ## fgrm doesnt converge super well -  maybe need to re-run
-ib_growth_bill_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_totalfixedb.RDS")
+ib_growth_bill_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.1.bill_gr_Funi_subset.RDS")
 summary(ib_growth_bill_fgrm)
 
 asym=fixef(ib_growth_bill_fgrm, pars = "asym_Intercept")[,1]
@@ -70,7 +70,7 @@ c_u95_f=c+(f*(fixef(ib_growth_bill_fgrm, pars = "c_FuniWE")[,4]))
 ### FROH ####
 ############
 # converges but shows no affect of inbreeding depression 
-ib_growth_bill_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_FROH_totalfixedb.RDS")
+ib_growth_bill_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.1.bill_gr_FROH_subset.RDS")
 summary(ib_growth_bill_froh)
 
 (((184+4)-184)/184)*100
@@ -122,8 +122,13 @@ c_fr_u95_f=c_fr+(f*(fixef(ib_growth_bill_froh, pars = "c_FHBD512gen")[,4]))
 ###############################################################
 
 # using fgrm shows id in asymptote #using froh shows no id (on the threshold for growth)
-ib_growth_mass_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_fixedb.RDS")
+ib_growth_mass_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.2_mass_gr_Funi_subset.RDS")
+
+ib_growth_mass_fgrm2=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_fixedb.RDS")
+
 summary(ib_growth_mass_fgrm)
+summary(ib_growth_mass_fgrm2)
+
 
 asym_m=fixef(ib_growth_mass_fgrm, pars = "asym_Intercept")[,1]
 b_m=fixef(ib_growth_mass_fgrm, pars = "b_Intercept")[,1]
@@ -172,8 +177,14 @@ fc_m_u95=c_m+(f*fixef(ib_growth_mass_fgrm, pars = "c_FuniWE")[,4])
 ############
 
 ## nothing showing for froh
-ib_growth_mass_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_FROH_totalfixedb.RDS")
+ib_growth_mass_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.2_mass_gr_FROH_subset.RDS")
+
+ib_growth_mass_froh2=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_FROH_totalfixedb.RDS")
+
+
 summary(ib_growth_mass_froh)
+summary(ib_growth_mass_froh2)
+
 
 asym_m_fr=fixef(ib_growth_mass_froh, pars = "asym_Intercept")[,1]
 b_m_fr=fixef(ib_growth_mass_froh, pars = "b_Intercept")[,1]
@@ -220,7 +231,7 @@ fc_m_fr_u95=c_m_fr+(f*(fixef(ib_growth_mass_froh, pars = "c_FHBD512gen")[,4]))
                   ### Tarsus ###
 ###############################################################
 # fgrm shows no id - doesnt in lmm too
-ib_growth_tarsus_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.4_tarsus_gr_funi_totalfixedb.RDS")
+ib_growth_tarsus_fgrm=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.4_tarsus_gr_Funi_subset.RDS")
 summary(ib_growth_tarsus_fgrm)
 
 asym1_t=fixef(ib_growth_tarsus_fgrm, pars = "asym1_Intercept")[,1]
@@ -265,8 +276,7 @@ fc_t_u95=c_t+(f*(fixef(ib_growth_tarsus_fgrm, pars = "c_FuniWE")[,4]))
 ############
 ### FROH ###
 ############
-#froh shows id in c
-ib_growth_tarsus_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.4_tarsus_gr_FROH_totalfixedb.RDS")
+ib_growth_tarsus_froh=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.4_tarsus_gr_FROH_subset.RDS")
 summary(ib_growth_tarsus_froh)
 
 (((587-3.16)-587)/587)*100

@@ -121,10 +121,10 @@ owl_hatch%>%
   filter(RingId=="M032156")
 
 
+corrected_consensus_ped2=corrected_consensus_ped%>%
+  distinct(RingId, .keep_all = T)
 
-
-
-write.table(corrected_consensus_ped,
+write.table(corrected_consensus_ped2,
             file = "sequioa/coreccted_consensus_pedigree.txt",
             row.names = F, quote = F, sep = ",",na = "NA") #saving tables as txt file 
 

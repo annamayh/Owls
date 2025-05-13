@@ -2,6 +2,7 @@
 .libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths()))
 
 library(brms)
+library(dplyr)
 
 ##################################################################################
 ########################### ~~ tarsus ~~ #############################################
@@ -11,7 +12,6 @@ args = commandArgs(trailingOnly = TRUE)
 scratch = as.character(args[1]) 
 
 tarsus_df=read.table("./input_dfs/tarsus_all_pheno_df.txt",sep=",", header=T)
-
 
 tarsus_df$clutch_merge=as.factor(tarsus_df$clutch_merge)
 tarsus_df$sex=as.factor(tarsus_df$sex)
@@ -51,9 +51,9 @@ growth_tarsus.mod=brm(
   ## model 
   bf(LeftTarsus ~ asym1 + (asym * exp(-b*(c)^age_days)),
      asym1 ~ 1, ## assuming there is no effect at age 0 
-     asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
+     asym ~ 1 + FuniW + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 ,
-     c ~ 1 + FuniWE + rank + sex + (1|RingId), 
+     c ~ 1 + FuniW + rank + sex + (1|RingId), 
      nl=TRUE),
   data=tarsus_df, 
   family = gaussian(),
@@ -70,10 +70,8 @@ growth_tarsus.mod=brm(
 
 
 
-
-
 ### save into outputs folder
-saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_funi_totalfixedb.RDS")) ##
+saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_Funi_subset.RDS")) ##
 
-#summary(growth_tarsus.mod)
+summary(growth_tarsus.mod)
 

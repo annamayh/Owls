@@ -11,11 +11,6 @@ library(dplyr)
 
 tarsus_df=read.table("./input_dfs/tarsus_all_pheno_df.txt",sep=",", header=T)
 
-# EDIT 
-# REMOVING THE ~250 IDS THAT WERE SEQ ON HIGH COV AND HAS BIAS UPWARDS ESTIMATES
-low_cov=read.table("./input_dfs/RingIdsCov5.txt",sep=",", header=T)
-tarsus_df=inner_join(low_cov, tarsus_df)
-
 length(unique(tarsus_df$RingId))
 
 #sorting out variables
@@ -45,11 +40,11 @@ prior_tarsus=c(prior(student_t(3, 650, 30), class = "Intercept"),
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_tarsus_GRM.Froh <- brm(LeftTarsus ~  1 + FHBD512gen + sex + rank + mc_age_acc +
+mod_tarsus_GRM.Froh <- brm(LeftTarsus ~  1 + FROH + sex + rank + mc_age_acc +
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),
                          data = tarsus_df,
-                         control=list(adapt_delta=0.98),
+                         control=list(adapt_delta=0.99),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
@@ -59,6 +54,6 @@ mod_tarsus_GRM.Froh <- brm(LeftTarsus ~  1 + FHBD512gen + sex + rank + mc_age_ac
                          thin=5
 )
 
-saveRDS(mod_tarsus_GRM.Froh,file="./outputs/1_subset_test/1.1.ID_tarsus_FROH.RDS") ##
+saveRDS(mod_tarsus_GRM.Froh,file="./outputs/1_traitID_subset/1.1.ID_tarsus_FROH.RDS") ##
 
 summary(mod_tarsus_GRM.Froh) ###

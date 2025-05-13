@@ -13,13 +13,13 @@ input_dir=args[2]
 scratch=args[3]
 
 
-hbd_segs_list_chr <- readRDS(paste0(input_dir,"/",input_file))%>%
+funi_chunks <- readRDS(paste0(input_dir,"/",input_file))%>%
   as.data.frame()%>%
   #rownames_to_column(var='RingId')%>%
   select_if(~ !any(is.na(.))) # remove the columns with Nas at the end of chromosomes
 
 ## This is to skip the chromosomes that have bad quality
-if(ncol(hbd_segs_list_chr)<3){
+if(ncol(funi_chunks)<3){
   print(paste0("Exiting due to NA values"))
   stop()  # Stop program
 } else{
@@ -28,13 +28,13 @@ if(ncol(hbd_segs_list_chr)<3){
   print(paste0("Starting super scaffold ",input_file," at: ", start_time))
   
   
-names(hbd_segs_list_chr)=make_clean_names(names(hbd_segs_list_chr)) ## removing weird syntax for pasting into model later
+names(funi_chunks)=make_clean_names(names(funi_chunks)) ## removing weird syntax for pasting into model later
 
 # reading in the 
 bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)
 
 
-bill_with_IBDinfo=hbd_segs_list_chr%>%
+bill_with_IBDinfo=funi_chunks%>%
   rename(RingId=ring_id)%>%
   right_join(bill_df, by = 'RingId')
 
@@ -47,7 +47,7 @@ bill_with_IBDinfo$nestboxID=as.factor(bill_with_IBDinfo$nestboxID)
 bill_with_IBDinfo$rank=as.numeric(bill_with_IBDinfo$rank)
 
 
-windows=colnames(hbd_segs_list_chr)[2:ncol(hbd_segs_list_chr)]
+windows=colnames(funi_chunks)[2:ncol(funi_chunks)]
 # mean centering age to give a meaningful intercept
 bill_with_IBDinfo$mc_age_acc <- bill_with_IBDinfo$age_acc - mean(bill_with_IBDinfo$age_acc)
 
@@ -118,7 +118,7 @@ for (wind in windows){
 }
 
 
-saveRDS(gwas_out,file=paste0(scratch,"gwas_out_",input_file,".RDS")) ##
+saveRDS(gwas_out,file=paste0(scratch,"Funi_gwas_out_",input_file,".RDS")) ##
 
 }
 

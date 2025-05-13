@@ -9,7 +9,7 @@ library(viridis)
 
 get_estimates=function(input_files){
   
-  gwas_output_list <- lapply(Sys.glob(paste0(bill_files)), readRDS)
+  gwas_output_list <- lapply(Sys.glob(paste0(input_files)), readRDS)
   
   unlisted_gwas=do.call(rbind,gwas_output_list)%>%
     as.data.frame()%>%
@@ -66,7 +66,7 @@ get_estimates_and_plot=function(input_files, trait){
                                            group=as.factor(id)))+
     
     geom_point()+
-    geom_hline(yintercept=mean_est, lty=2) + 
+    #geom_hline(yintercept=mean_est, lty=2) + 
     geom_hline(yintercept=0, lty=1) +  
     theme_bw()+
     scale_x_continuous(label = axis.set$super_scaffold, breaks = axis.set$center, limits = c(0,nrow(unlisted_gwas)), expand = c(0, 0),)+
@@ -86,9 +86,9 @@ get_estimates_and_plot=function(input_files, trait){
 
 
 setwd("/Users/ahewett1/Documents")
-bill_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.1_bill_brmsGWAS_FINAL/*.RDS.RDS"
-mass_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.2_mass_brmsGWAS_FINAL/*.RDS.RDS"
-tarsus_files="Inbreeding_depression_owls/Model_outputs/4_Gen_arch/4.4_tarsus_brmsGWAS_FINAL/*.RDS.RDS"
+bill_files="Inbreeding_depression_owls/Model_outputs/4_gen_arch_subset/4.1_bill_FROH_IDGWAS_subset/*.RDS.RDS"
+mass_files="Inbreeding_depression_owls/Model_outputs/4_gen_arch_subset/4.2_mass_FROH_IDGWAS_subset/*.RDS.RDS"
+tarsus_files="Inbreeding_depression_owls/Model_outputs/4_gen_arch_subset/4.4_tarsus_FROH_IDGWAS_subset/*.RDS.RDS"
 
 
 bill_gen_arch=get_estimates(bill_files)
@@ -110,6 +110,8 @@ bill_denisty=ggplot(bill_gen_arch, aes(x=estimate)) +
   geom_density(fill=colours[3], alpha=0.8)+
   theme_classic()+
   geom_vline(xintercept = 0)+
+  geom_vline(xintercept = -2.5, linetype = 2)+
+  geom_vline(xintercept = 2.5, linetype = 2)+
   labs(x='Estimate', y='Density')+
   theme(axis.title.y=element_blank())+
   coord_flip()
@@ -124,6 +126,8 @@ mass_denisty=ggplot(mass_gen_arch, aes(x=estimate)) +
   geom_density(fill=colours[2], alpha=0.8)+
   theme_classic()+
   geom_vline(xintercept = 0)+
+  geom_vline(xintercept = -10, linetype = 2)+
+  geom_vline(xintercept = 10, linetype = 2)+
   labs(x='Estimate', y='Density')+
   theme(axis.title.y=element_blank())+
   coord_flip()
@@ -137,6 +141,8 @@ tarsus_density=ggplot(tarsus_gen_arch, aes(x=estimate)) +
   geom_density(fill=colours[1], alpha=0.65)+
   theme_classic()+
   geom_vline(xintercept = 0)+
+  geom_vline(xintercept = -10, linetype = 2)+
+  geom_vline(xintercept = 10,, linetype = 2)+
   labs(x='Estimate', y='Density')+
   theme(axis.title.y=element_blank())+
   coord_flip()

@@ -11,11 +11,6 @@ library(dplyr)
 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)
 
-# EDIT 
-# REMOVING THE ~250 IDS THAT WERE SEQ ON HIGH COV AND HAS BIAS UPWARDS ESTIMATES
-low_cov=read.table("./input_dfs/RingIdsCov5.txt",sep=",", header=T)
-mass_df=inner_join(low_cov, mass_df)
-
 length(unique(mass_df$RingId))
 
 
@@ -44,11 +39,11 @@ prior_mass=c(prior(student_t(3, 330, 60), class = "Intercept"), ##
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen + sex + rank + mc_age_acc +
+mod_mass_GRM.FROH <- brm(Mass ~  1 + FROH + sex + rank + mc_age_acc +
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),                         
                          data = mass_df,
-                         control=list(adapt_delta=0.9),
+                         control=list(adapt_delta=0.95),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
@@ -58,6 +53,6 @@ mod_mass_GRM.FROH <- brm(Mass ~  1 + FHBD512gen + sex + rank + mc_age_acc +
                          thin=5
 )
 
-saveRDS(mod_mass_GRM.FROH,file="./outputs/1_subset_test/1.1.ID_mass_FROH.RDS") ##
+saveRDS(mod_mass_GRM.FROH,file="./outputs/1_traitID_subset/1.1.ID_mass_FROH.RDS") ##
 
 summary(mod_mass_GRM.FROH) ###

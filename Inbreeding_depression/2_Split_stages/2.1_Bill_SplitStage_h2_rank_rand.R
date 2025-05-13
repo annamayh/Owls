@@ -1,3 +1,5 @@
+.libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths())) #specify library cluster path1-11
+
 library(tidyverse)
 library(brms)
 library(corpcor)
@@ -31,7 +33,7 @@ GRM <- as(grm_filt_pd, "dgCMatrix")
 ## same as priors for simple model + prior for pe ~= 0 because we expect little var 
 prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ## 
              prior(student_t(3,0,20), class = "sd"),
-             prior(cauchy(0, 5), class = "sd", group="RingId_pe"))
+             prior(normal(0, 5), class = "sd", group="RingId_pe"))
 
 mod_bill_GRM.split_stage_h2 <- brm(
                       
@@ -53,4 +55,4 @@ mod_bill_GRM.split_stage_h2 <- brm(
 
 summary(mod_bill_GRM.split_stage_h2) ###
 
-saveRDS(mod_bill_GRM.split_stage_h2,file=paste0(scratch,"2.1.Bill_split_stage_h2_rank_rand.RDS")) ##
+saveRDS(mod_bill_GRM.split_stage_h2,file=paste0(scratch,"2.1.bill_split_stage_subset.RDS")) ##

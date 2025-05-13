@@ -1,8 +1,9 @@
+.libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths())) #specify library cluster path
 
-library(brms,lib = "/users/ahewett1/R")
-library(janitor,lib = "/users/ahewett1/R")
-library(dplyr,lib = "/users/ahewett1/R")
-library(tibble,lib = "/users/ahewett1/R")
+library(brms)
+library(janitor)
+library(dplyr)
+library(tibble)
 
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -31,6 +32,7 @@ names(hbd_segs_list_chr)=make_clean_names(names(hbd_segs_list_chr)) ## removing 
 
 # reading in the 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)
+
 
 mass_with_IBDinfo=hbd_segs_list_chr%>%
   rename(RingId=ring_id)%>%
@@ -64,7 +66,7 @@ for (wind in windows){
      counter=counter+1
   
     form_wind=as.formula(paste0("Mass ~  1 +", wind," + 
-        sex + mc_age_acc + rank + FHBD512gen +
+        sex + mc_age_acc + rank + FROH +
        (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
         (1|year) + (1|month) + (1|nestboxID)"))
 

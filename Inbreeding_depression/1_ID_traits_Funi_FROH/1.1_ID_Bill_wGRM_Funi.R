@@ -3,6 +3,7 @@
 library(brms)
 library(corpcor)
 library(readr)
+library(dplyr)
 
 ##################################################################################
 ########################### ~~ Bill ~~ #############################################
@@ -12,11 +13,6 @@ library(readr)
 # also mean centering age (so estimates are for an ave aged indiv)  
 
 bill_df=read.table("./input_dfs/bill_all_pheno_df.txt",sep=",", header=T)
-
-# EDIT 
-# REMOVING THE ~250 IDS THAT WERE SEQ ON HIGH COV AND HAS BIAS UPWARDS ESTIMATES
-low_cov=read.table("./input_dfs/RingIdsCov5.txt",sep=",", header=T)
-bill_df=left_join(low_cov, bill_df)
 
 length(unique(bill_df$RingId))
 
@@ -48,11 +44,11 @@ prior_bill=c(prior(student_t(3, 180,20), class = "Intercept"), ##
 
 
 ## slight trouble converging when using default number of itts so increased and using priors
-mod_bill_GRM.Funi <- brm(BillLength ~  1 + FuniWE + sex + mc_age_acc + rank +
+mod_bill_GRM.Funi <- brm(BillLength ~  1 + FuniW + sex + mc_age_acc + rank +
                            (1|gr(RingId, cov=Amat)) + (1|RingId_pe) + (1|Observer) + (1|clutch_merge) +
                            (1|year) + (1|month) + (1|nestboxID),
                          data = bill_df,
-                         control=list(adapt_delta=0.9),
+                         control=list(adapt_delta=0.95),
                          data2 = list(Amat = GRM),
                          chains = 4,
                          cores=4,
@@ -62,6 +58,6 @@ mod_bill_GRM.Funi <- brm(BillLength ~  1 + FuniWE + sex + mc_age_acc + rank +
                          thin=5
 )
 
-saveRDS(mod_bill_GRM.Funi,file="./outputs/1_subset_test/1.1.ID_bill_FuniW.RDS") ##
+saveRDS(mod_bill_GRM.Funi,file="./outputs/1_traitID_subset/1.1.ID_bill_FuniW.RDS") ##
 
 summary(mod_bill_GRM.Funi) ###

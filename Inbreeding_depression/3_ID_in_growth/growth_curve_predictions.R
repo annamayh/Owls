@@ -9,9 +9,11 @@ f=0.25
 colinb="goldenrod1"
 colave="chocolate"
 
-ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.1.bill_gr_FROH_totalfixedb.RDS")
+ib_growth_bill=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.1.bill_gr_FROH_subset.RDS")
+
 summary(ib_growth_bill)
-#prior_summary(ib_growth_bill)
+
+prior_summary(ib_growth_bill)
 #plot(ib_growth_bill)
 
 
@@ -39,7 +41,7 @@ id_bill
 #################
 #####  Mass #####
 ##################
-ib_growth_mass=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth/3.2_mass_gr_FROH_totalfixedb.RDS")
+ib_growth_mass=readRDS("Inbreeding_depression_owls/Model_outputs/3_growth_subset/3.2_mass_gr_FROH_subset.RDS")
 summary(ib_growth_mass)
 #plot(ib_growth_mass)
 

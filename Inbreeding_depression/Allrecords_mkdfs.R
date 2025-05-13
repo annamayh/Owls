@@ -8,8 +8,12 @@ setwd("/Users/ahewett1/Documents")
 
 
 ##Fgrm and FROH from elo
-inb=read.table("Inbreeding_depression_owls/All3085_FuniWE_FHBD512g.txt", header = T)%>%
-  rename(RingId=INDVs)
+inb_FROH=read.table("Inbreeding_depression_owls/pheno_df/FHBD_512gen_goodQ_ss_only.txt",  sep=',')%>%
+  select('V1', 'V39')%>% #only get genome-wide FROH (other cols are per chr FROH)
+  rename(RingId=V1, FROH=V39) 
+
+inb_FuniW=read.table("Inbreeding_depression_owls/pheno_df/FuniW_goodQ_ss_only.txt", sep=',')%>%
+  rename(RingId=V1, FuniW=V2) 
 
 #table(owl_mes$EstimatedGrowthStage)
 
@@ -50,15 +54,15 @@ sex=owl_sex_g%>%
   select(RingId, sex)
 
 
-owl_site=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Site.csv", header = T)%>%
-  select(SiteId, CH1903X, CH1903Y)%>%
-  mutate(SiteId=as.character(SiteId))
-
-check=owl_bird%>%
-   filter(HatchDateErrorMargin>180)%>%
-  drop_na(BornClutchId)%>%
-  inner_join()
-  
+# owl_site=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Site.csv", header = T)%>%
+#   select(SiteId, CH1903X, CH1903Y)%>%
+#   mutate(SiteId=as.character(SiteId))
+# 
+# check=owl_bird%>%
+#    filter(HatchDateErrorMargin>180)%>%
+#   drop_na(BornClutchId)%>%
+#   inner_join()
+#   
 
 ## info on clutch 
 owl_bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920_Bird.csv", header = T)%>%
@@ -75,10 +79,11 @@ owl_bird=read.csv("Barn_owl_general/Data_base_dfs/BarnOwls_Legacy_20231010153920
     Nestbox!="" ~ Nestbox, 
   ))%>%
   left_join(owl_site)
-  
+
 
 ##merge all df together by RingID
-fledge_merge=inb%>%
+fledge_merge=inb_FROH%>%
+  left_join(inb_FuniW)%>%
   inner_join(owl_mes)%>%
   inner_join(sex)%>%
   inner_join(owl_bird,relationship = "many-to-many")%>%
@@ -126,27 +131,32 @@ all_pheno_df=fledge_mes_rep%>%
 
 n_distinct(all_pheno_df$RingId) ## 2300 diff ids and total of 17073 obs but some have missing info for pheno traits
 
+### REMOVING THE ~250 IDS THAT WERE SEQ ON MED COV AND HAVE BIAS UPWARDS ESTIMATES
+low_cov=read.table("Inbreeding_depression_owls/pheno_df/RingIdsCov5.txt",sep=",", header=T)
+
 ## ~~ Mass df ~~ ####
 mass_df_all=all_pheno_df%>%
-  select(RingId, Mass, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
-  drop_na(Mass,FuniWE) %>%#remove NAs
+  select(RingId, Mass, FROH, FuniW, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
+  drop_na(Mass,FuniW) %>%#remove NAs
+  inner_join(low_cov)%>%
   unique() %>%## duplicates from repeated tracking ids on 
   filter(Mass<1000) %>%#remove 1 incorrect mass record 
   mutate(mass_scale=Mass/100)%>%
   mutate(age_acc=362*exp(-4.01*0.893^age_days)) %>% ## account for age using gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
-plot(mass_df_all$age_days[mass_df_all$age_days < 90], mass_df_all$Mass[mass_df_all$age_days < 90])
+#plot(mass_df_all$age_days[mass_df_all$age_days < 90], mass_df_all$Mass[mass_df_all$age_days < 90])
 
-n_distinct(mass_df_all$RingId) ##2261 ids with mass records, 11150 records
+n_distinct(mass_df_all$RingId) ##1996 ids with mass records,  
 
 table(mass_df_all$gr_stage)
 
 
 ## ~~ Bill length  ~~ ####
 bill_df_all=all_pheno_df%>%
-  select(RingId, BillLength, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
-  na.omit(BillLength,FuniWE) %>%#remove NAs
+  select(RingId, BillLength, FROH, FuniW, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage,julian_hatchdate, month, dev_stage, min_mes)%>% ##remove phenotype info we may not have 
+  na.omit(BillLength,FuniW) %>%#remove NAs
+  inner_join(low_cov)%>%
   filter(!(BillLength<50 & age_days >5))%>% #filtering out 1 ids that are probably incorrect 
   unique() %>%## duplicates from repeated tracking ids on 
   mutate(bill_scale=BillLength/100) %>% ## rescaling for ease of model convergence
@@ -157,23 +167,28 @@ plot(bill_df_all$age_days[bill_df_all$age_days < 90], bill_df_all$BillLength[bil
 
 
 
-n_distinct(bill_df_all$RingId) ##2298 ids with records, 6746
+n_distinct(bill_df_all$RingId) ##1996 ids with records, 
 
 table(bill_df_all$gr_stage)
 
 
 ## ~~ Tarsus length ~~ ###
 tarsus_df_all=all_pheno_df%>%
-  select(RingId, LeftTarsus, FHBD512gen, FuniWE, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
-  na.omit(FuniWE,LeftTarsus) %>% #remove NAs for important bits
+  select(RingId, LeftTarsus, FROH, FuniW, age_days,sex,rank, clutch_merge, Observer, year, nestboxID, gr_stage, julian_hatchdate, month, dev_stage,min_mes)%>% ##keep only pheno info interested in
+  na.omit(FuniW,LeftTarsus) %>% #remove NAs for important bits
+  inner_join(low_cov)%>%
   filter(!(LeftTarsus<200 & age_days >20))%>% #filtering out 6 ids that are probably incorrect i.e. when their tarsus is very small for their age
   unique()%>% ## duplicates from repeated tracking ids on \
-  mutate(tarsus_scale=LeftTarsus/100)%>%
+  mutate(tarsus_scale=LeftTarsus/100)%>% # scaling for easier model convergence 
   mutate(age_acc= 55 + (662*exp(-2.341*0.89^age_days))) %>% ## account for age unsing gompertz growth
   mutate(RingId_pe=RingId) # add permanent environment for repeated measures 
 
 
 plot(tarsus_df_all$age_days[tarsus_df_all$age_days < 90], tarsus_df_all$LeftTarsus[tarsus_df_all$age_days < 90])
+
+n_distinct(tarsus_df_all$RingId) ##
+## adding extra info from other life stages doesnt increase the number of ids but does inc the number of records by ~ 500 for each  
+## most of the ids are ones we have info from clutch etc. 
 
 
 ## save all dfs
@@ -193,20 +208,16 @@ write.table(mass_df_all,
 
 
 
-table(tarsus_df_all$gr_stage)
 
-n_distinct(tarsus_df_all$RingId) ##
-## adding extra info from other life stages doesnt increase the number of ids but does inc the number of records by ~ 500 for each  
-## most of the ids are ones we have info from clutch etc. 
 
 
 ####3
 ## none have measurements at this observation date ... so perhaps its the obs date that is wrong 
-errors=fledge_mes_rep%>%
-  mutate(age_days=as.numeric(date_diff))%>%
-  group_by(RingId)%>%
-  mutate(min_mes=min(age_days))%>%
-  filter(age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
-  as.data.frame()
-
+# errors=fledge_mes_rep%>%
+#   mutate(age_days=as.numeric(date_diff))%>%
+#   group_by(RingId)%>%
+#   mutate(min_mes=min(age_days))%>%
+#   filter(age_days<0)%>% ## for ids where measurement is before hatch date (9 ids)
+#   as.data.frame()
+# 
 

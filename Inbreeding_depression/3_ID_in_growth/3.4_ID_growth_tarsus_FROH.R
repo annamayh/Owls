@@ -3,6 +3,7 @@
 .libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths()))
 
 library(brms)
+library(dplyr)
 
 ##################################################################################
 ########################### ~~ tarsus ~~ #############################################
@@ -13,14 +14,13 @@ scratch = as.character(args[1])
 
 tarsus_df=read.table("./input_dfs/tarsus_all_pheno_df.txt",sep=",", header=T)
 
-
+# sorting out variables
 tarsus_df$clutch_merge=as.factor(tarsus_df$clutch_merge)
 tarsus_df$sex=as.factor(tarsus_df$sex)
 tarsus_df$RingId=as.factor(tarsus_df$RingId)
 tarsus_df$year=as.factor(tarsus_df$year)
 tarsus_df$Observer=as.factor(tarsus_df$Observer)
 tarsus_df$nestboxID=as.factor(tarsus_df$nestboxID)
-
 tarsus_df$rank=as.numeric(tarsus_df$rank)
 
 
@@ -51,9 +51,9 @@ growth_tarsus.mod=brm(
   ## model 
   bf(LeftTarsus ~ asym1 + (asym * exp(-b*(c)^age_days)),
      asym1 ~ 1, ## assuming there is no effect at age 0 
-     asym ~ 1 + FHBD512gen + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
+     asym ~ 1 + FROH + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 ,
-     c ~ 1 + FHBD512gen + rank + sex + (1|RingId), 
+     c ~ 1 + FROH + rank + sex + (1|RingId), 
      nl=TRUE),
   data=tarsus_df, 
   family = gaussian(),
@@ -73,7 +73,7 @@ growth_tarsus.mod=brm(
 
 
 ### save into outputs folder
-saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_FROH_totalfixedb.RDS")) ##
+saveRDS(growth_tarsus.mod,file=paste0(scratch,"3.4_tarsus_gr_FROH_subset.RDS")) ##
 
 summary(growth_tarsus.mod)
 

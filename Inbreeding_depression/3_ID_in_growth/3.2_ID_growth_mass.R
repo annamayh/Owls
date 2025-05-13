@@ -1,15 +1,18 @@
 ### ID in mass growth ###
 
-library(brms,  lib = "/users/ahewett1/R")
-library(corpcor,  lib = "/users/ahewett1/R")
-library(readr,  lib = "/users/ahewett1/R")
+.libPaths(c("/work/FAC/FBM/DEE/jgoudet/barn_owl/ahewett/R", .libPaths())) #specify library cluster path
+
+library(brms)
+library(dplyr)
+
+args = commandArgs(trailingOnly = TRUE)
+scratch = as.character(args[1]) 
 
 ##################################################################################
 ########################### ~~ mass ~~ #############################################
 #####################################################################################
 
 mass_df=read.table("./input_dfs/mass_all_pheno_df.txt",sep=",", header=T)
-
 
 mass_df$clutch_merge=as.factor(mass_df$clutch_merge)
 mass_df$sex=as.factor(mass_df$sex)
@@ -48,9 +51,9 @@ prior_mass_gr<- c(
 growth_mass.mod=brm(
   ## model 
   bf(Mass ~ asym * exp(-b*(c)^age_days),
-     asym ~ 1 + FuniWE + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
+     asym ~ 1 + FuniW + rank + sex + (1|clutch_merge) + (1|Observer) + (1|year) + (1|month) + (1|RingId) + (1|nestboxID),
      b ~ 1 ,
-     c ~ 1 + FuniWE + rank + sex + (1|RingId), 
+     c ~ 1 + FuniW + rank + sex + (1|RingId), 
      nl=TRUE),
   data=mass_df, 
   family = gaussian(),
@@ -68,6 +71,6 @@ growth_mass.mod=brm(
 
 
 ### save into outputs folder
-saveRDS(growth_mass.mod,file="./outputs/3_growth/3.2_mass_gr_totalfixedb.RDS") ##
+saveRDS(growth_mass.mod,file=paste0(scratch,"3.2_mass_gr_Funi_subset.RDS")) ##
 
 summary(growth_mass.mod)
